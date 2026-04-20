@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Royal Vegas Slots</title>
+<style>
+  :root {
+    --red: #e11d2e;
+    --red-deep: #8b0a1a;
+    --gold: #ffd54a;
+    --gold-deep: #b8860b;
+    --purple: #3a1757;
+    --purple-deep: #1a0630;
+    --purple-light: #6a3aa0;
+    --cream: #fff4d1;
+    --shadow: rgba(0, 0, 0, 0.55);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    font-family: "Trebuchet MS", "Helvetica Neue", sans-serif;
+    color: var(--cream);
+    overflow-x: hidden;
+  }
+
+  body {
+    background:
+      radial-gradient(ellipse at top, #5a2591 0%, var(--purple) 40%, var(--purple-deep) 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    user-select: none;
+  }
+
+  /* Marquee lights around the viewport */
+  .bulbs {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      radial-gradient(circle, var(--gold) 2px, transparent 3px),
+      radial-gradient(circle, var(--gold) 2px, transparent 3px);
+    background-size: 32px 16px, 32px 16px;
+    background-position: 0 0, 16px 100%;
+    background-repeat: repeat-x;
+    animation: bulbFlicker 1.2s steps(2) infinite;
+    opacity: 0.7;
+    z-index: 1;
+  }
+  @keyframes bulbFlicker {
+    0%, 100% { filter: drop-shadow(0 0 4px var(--gold)); }
+    50% { filter: drop-shadow(0 0 12px var(--red)); }
+  }
+
+  .app {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 960px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-top: 12px;
+  }
+
+  /* Top bar with title + stats */
+  .topbar {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(180deg, var(--red) 0%, var(--red-deep) 100%);
+    border: 3px solid var(--gold);
+    border-radius: 16px;
+    padding: 12px 18px;
+    box-shadow: 0 4px 20px var(--shadow), inset 0 0 30px rgba(0,0,0,0.35);
+  }
+
+  .title {
+    font-family: "Georgia", serif;
+    font-weight: 900;
+    font-size: clamp(20px, 4vw, 34px);
+    color: var(--gold);
+    text-shadow:
+      0 0 8px var(--gold),
+      0 0 16px var(--red),
+      2px 2px 0 #000;
+    letter-spacing: 2px;
+    text-align: center;
+    white-space: nowrap;
+    animation: titleGlow 2.5s ease-in-out infinite alternate;
+  }
+  @keyframes titleGlow {
+    from { text-shadow: 0 0 8px var(--gold), 0 0 16px var(--red), 2px 2px 0 #000; }
+    to   { text-shadow: 0 0 16px var(--gold), 0 0 28px #fff, 2px 2px 0 #000; }
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .stat .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--cream);
+    opacity: 0.85;
+  }
+  .stat .value {
+    font-family: "Courier New", monospace;
+    font-size: clamp(18px, 3vw, 26px);
+    font-weight: bold;
+    color: var(--gold);
+    text-shadow: 0 0 6px var(--gold-deep);
+  }
+  .stat-left { justify-self: start; }
+  .stat-right { justify-self: end; }
+
+  /* Secondary status row */
+  .status-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .chip {
+    background: linear-gradient(180deg, var(--purple-light), var(--purple));
+    border: 2px solid var(--gold);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 12px;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 8px var(--shadow);
+  }
+  .chip strong {
+    color: var(--gold);
+    font-size: 14px;
+  }
+  .chip.hot { border-color: var(--red); animation: hotPulse 1s ease-in-out infinite; }
+  @keyframes hotPulse {
+    0%, 100% { box-shadow: 0 0 6px var(--red); }
+    50% { box-shadow: 0 0 18px var(--red); }
+  }
+
+  /* Slot machine cabinet */
+  .cabinet {
+    background:
+      linear-gradient(180deg, #2a0f44 0%, #1a0630 100%);
+    border: 6px solid var(--gold);
+    border-radius: 24px;
+    padding: 22px;
+    box-shadow:
+      0 0 30px rgba(255, 213, 74, 0.4),
+      0 10px 40px var(--shadow),
+      inset 0 0 50px rgba(0,0,0,0.5);
+    position: relative;
+  }
+  .cabinet::before, .cabinet::after {
+    content: "";
+    position: absolute;
+    top: -10px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--red) 0%, var(--red-deep) 70%);
+    box-shadow: 0 0 20px var(--red), inset 0 0 8px #fff;
+    animation: sideLamp 0.8s alternate infinite;
+  }
+  .cabinet::before { left: -10px; }
+  .cabinet::after { right: -10px; }
+  @keyframes sideLamp {
+    from { opacity: 0.6; transform: scale(0.9); }
+    to   { opacity: 1; transform: scale(1.1); }
+  }
+
+  .reels {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    background: #000;
+    border: 4px solid var(--gold-deep);
+    border-radius: 12px;
+    padding: 10px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .reel {
+    height: 300px;
+    background: linear-gradient(180deg, #2a1050 0%, #12041f 50%, #2a1050 100%);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 0 25px rgba(0,0,0,0.9);
+  }
+  .reel::before, .reel::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 40px;
+    z-index: 3;
+    pointer-events: none;
+  }
+  .reel::before {
+    top: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0.95) 0%, transparent 100%);
+  }
+  .reel::after {
+    bottom: 0;
+    background: linear-gradient(0deg, rgba(0,0,0,0.95) 0%, transparent 100%);
+  }
+
+  .strip {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    will-change: transform;
+  }
+
+  .symbol {
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 64px;
+    text-shadow: 0 0 10px rgba(255, 213, 74, 0.6);
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+  }
+
+  /* Payline indicator (center row) */
+  .payline {
+    position: absolute;
+    left: 10px; right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 100px;
+    border-top: 2px solid rgba(255, 213, 74, 0.0);
+    border-bottom: 2px solid rgba(255, 213, 74, 0.0);
+    pointer-events: none;
+    z-index: 4;
+    transition: border-color 0.2s;
+  }
+  .payline.active {
+    border-top-color: var(--gold);
+    border-bottom-color: var(--gold);
+    box-shadow: 0 0 20px var(--gold);
+    animation: paylinePulse 0.6s ease-in-out infinite alternate;
+  }
+  @keyframes paylinePulse {
+    from { box-shadow: 0 0 10px var(--gold); }
+    to   { box-shadow: 0 0 30px var(--gold), 0 0 60px var(--red); }
+  }
+
+  /* Control panel */
+  .controls {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 16px;
+    margin-top: 16px;
+  }
+  .controls.lefty {
+    grid-template-columns: auto 1fr 1fr;
+  }
+  .controls.lefty .spin-wrap { order: -1; }
+
+  .bet-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: linear-gradient(180deg, var(--purple-light), var(--purple-deep));
+    border: 2px solid var(--gold);
+    border-radius: 12px;
+    padding: 10px 14px;
+  }
+  .bet-panel label {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  .bet-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .bet-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 20px;
+    font-weight: bold;
+    border: 2px solid var(--gold);
+    background: linear-gradient(180deg, var(--red), var(--red-deep));
+    color: var(--cream);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.08s, box-shadow 0.15s;
+  }
+  .bet-btn:hover:not(:disabled) {
+    box-shadow: 0 0 12px var(--gold);
+  }
+  .bet-btn:active:not(:disabled) { transform: scale(0.92); }
+  .bet-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  #betInput {
+    flex: 1;
+    min-width: 80px;
+    background: #000;
+    border: 2px solid var(--gold);
+    border-radius: 8px;
+    color: var(--gold);
+    font-family: "Courier New", monospace;
+    font-size: 22px;
+    font-weight: bold;
+    text-align: center;
+    padding: 6px;
+    outline: none;
+  }
+  #betInput:focus { box-shadow: 0 0 12px var(--gold); }
+
+  .quick-bets {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .quick-bet {
+    flex: 1;
+    min-width: 48px;
+    background: transparent;
+    border: 1px solid var(--gold);
+    color: var(--cream);
+    border-radius: 6px;
+    padding: 4px 6px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .quick-bet:hover { background: rgba(255,213,74,0.2); }
+
+  /* Spin button - the star */
+  .spin-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    justify-self: center;
+  }
+  .spin-btn {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    border: 5px solid var(--gold);
+    background:
+      radial-gradient(circle at 35% 35%, #ff5566 0%, var(--red) 40%, var(--red-deep) 100%);
+    color: var(--cream);
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    cursor: pointer;
+    box-shadow:
+      0 0 30px var(--red),
+      0 8px 20px var(--shadow),
+      inset 0 4px 20px rgba(255,255,255,0.3),
+      inset 0 -10px 30px rgba(0,0,0,0.5);
+    transition: transform 0.1s, box-shadow 0.2s;
+    text-shadow: 2px 2px 0 #000, 0 0 6px var(--gold);
+    font-family: Georgia, serif;
+  }
+  .spin-btn:hover:not(:disabled) {
+    transform: scale(1.05);
+    box-shadow:
+      0 0 50px var(--gold),
+      0 8px 30px var(--shadow),
+      inset 0 4px 20px rgba(255,255,255,0.4),
+      inset 0 -10px 30px rgba(0,0,0,0.5);
+  }
+  .spin-btn:active:not(:disabled) { transform: scale(0.95); }
+  .spin-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    animation: spinning 0.8s linear infinite;
+  }
+  @keyframes spinning {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  .auto-btn {
+    width: 100%;
+    padding: 10px 16px;
+    border: 2px solid var(--gold);
+    border-radius: 10px;
+    background: linear-gradient(180deg, var(--purple-light), var(--purple));
+    color: var(--cream);
+    font-weight: bold;
+    font-size: 13px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .auto-btn:hover { box-shadow: 0 0 12px var(--gold); }
+  .auto-btn.active {
+    background: linear-gradient(180deg, var(--gold), var(--gold-deep));
+    color: var(--purple-deep);
+  }
+
+  /* Settings panel */
+  .settings-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    background: rgba(0,0,0,0.35);
+    border: 1px solid var(--gold-deep);
+    border-radius: 10px;
+    padding: 8px 14px;
+    flex-wrap: wrap;
+  }
+  .toggle-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .toggle {
+    position: relative;
+    width: 54px;
+    height: 26px;
+    background: var(--purple-deep);
+    border: 2px solid var(--gold);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .toggle::after {
+    content: "";
+    position: absolute;
+    top: 1px;
+    left: 1px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--gold);
+    transition: left 0.25s ease, background 0.25s;
+  }
+  .toggle.on::after { left: 29px; background: var(--red); }
+
+  /* Win display */
+  .win-banner {
+    background: linear-gradient(90deg, var(--purple), var(--red), var(--purple));
+    background-size: 200% 100%;
+    border: 2px solid var(--gold);
+    border-radius: 10px;
+    padding: 10px 16px;
+    text-align: center;
+    font-weight: bold;
+    letter-spacing: 1px;
+    color: var(--cream);
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+  }
+  .win-banner.win {
+    animation: winShimmer 0.8s linear infinite;
+    color: #000;
+    background: linear-gradient(90deg, var(--gold), #fff, var(--gold));
+    background-size: 200% 100%;
+  }
+  .win-banner.loss {
+    opacity: 0.85;
+    color: var(--cream);
+    font-style: italic;
+  }
+  @keyframes winShimmer {
+    from { background-position: 0% 0%; }
+    to   { background-position: 200% 0%; }
+  }
+
+  /* Celebration overlay */
+  .celebration {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .celebration.show { opacity: 1; }
+  .celebration .big-text {
+    font-family: Georgia, serif;
+    font-size: clamp(40px, 10vw, 120px);
+    font-weight: 900;
+    color: var(--gold);
+    text-shadow:
+      0 0 20px var(--red),
+      0 0 40px var(--gold),
+      4px 4px 0 #000;
+    letter-spacing: 6px;
+    transform: scale(0.5);
+    animation: bigTextPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    text-align: center;
+  }
+  @keyframes bigTextPop {
+    0%   { transform: scale(0.3) rotate(-10deg); opacity: 0; }
+    60%  { transform: scale(1.2) rotate(5deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+
+  .confetti {
+    position: absolute;
+    width: 10px;
+    height: 14px;
+    top: -20px;
+    animation: confettiFall linear forwards;
+  }
+  @keyframes confettiFall {
+    from { transform: translateY(0) rotate(0deg); opacity: 1; }
+    to   { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* Reel animations */
+  .strip.spinning {
+    animation: reelSpin 0.12s linear infinite;
+  }
+  @keyframes reelSpin {
+    from { transform: translateY(0); }
+    to   { transform: translateY(-100px); }
+  }
+
+  .strip.slow-landing {
+    transition: transform 1.6s cubic-bezier(0.15, 0.85, 0.25, 1.0);
+  }
+
+  .symbol.winner {
+    animation: winnerGlow 0.6s ease-in-out infinite alternate;
+  }
+  @keyframes winnerGlow {
+    from {
+      transform: scale(1);
+      filter: drop-shadow(0 0 8px var(--gold));
+    }
+    to {
+      transform: scale(1.15);
+      filter: drop-shadow(0 0 30px var(--gold)) drop-shadow(0 0 50px var(--red));
+    }
+  }
+
+  .reel.suspense {
+    animation: suspensePulse 0.5s ease-in-out infinite alternate;
+  }
+  @keyframes suspensePulse {
+    from { box-shadow: inset 0 0 25px rgba(0,0,0,0.9), 0 0 10px var(--purple-light); }
+    to   { box-shadow: inset 0 0 25px rgba(0,0,0,0.9), 0 0 30px var(--gold); }
+  }
+
+  /* Multiplier flash */
+  .multiplier-flash {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: Georgia, serif;
+    font-size: 90px;
+    font-weight: 900;
+    color: var(--gold);
+    text-shadow: 0 0 20px var(--red), 4px 4px 0 #000;
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0;
+  }
+  .multiplier-flash.show {
+    animation: multPop 1.4s ease-out forwards;
+  }
+  @keyframes multPop {
+    0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+    30%  { opacity: 1; transform: translate(-50%, -50%) scale(1.3); }
+    70%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.2); }
+  }
+
+  /* Jackpot meter */
+  .jackpot-meter {
+    background: linear-gradient(180deg, #000, #1a0630);
+    border: 2px solid var(--gold);
+    border-radius: 8px;
+    padding: 8px 14px;
+    text-align: center;
+    font-family: "Courier New", monospace;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 220px;
+  }
+  .jackpot-meter .jp-label {
+    font-size: 11px;
+    color: var(--red);
+    text-shadow: 0 0 8px var(--red);
+    letter-spacing: 2px;
+  }
+  .jackpot-meter .jp-value {
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--gold);
+    text-shadow: 0 0 10px var(--gold);
+    animation: jpCount 3s linear infinite;
+  }
+  @keyframes jpCount {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.3); }
+  }
+
+  /* Token inventory */
+  .tokens {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .token {
+    background: linear-gradient(180deg, var(--gold), var(--gold-deep));
+    color: var(--purple-deep);
+    border: 2px solid var(--cream);
+    border-radius: 10px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: transform 0.15s;
+    box-shadow: 0 2px 8px var(--shadow);
+  }
+  .token:hover:not(.disabled) { transform: translateY(-2px) scale(1.05); box-shadow: 0 0 12px var(--gold); }
+  .token.disabled { opacity: 0.4; cursor: not-allowed; }
+  .token.active {
+    background: linear-gradient(180deg, #fff, var(--gold));
+    animation: tokenActive 0.8s ease-in-out infinite alternate;
+  }
+  @keyframes tokenActive {
+    from { box-shadow: 0 0 8px var(--gold); }
+    to   { box-shadow: 0 0 20px var(--gold), 0 0 40px var(--red); }
+  }
+
+  .footer-note {
+    text-align: center;
+    font-size: 11px;
+    opacity: 0.6;
+    padding: 8px;
+  }
+
+  @media (max-width: 600px) {
+    .reel { height: 240px; }
+    .symbol { height: 80px; font-size: 48px; }
+    .spin-btn { width: 100px; height: 100px; font-size: 14px; }
+    .controls { grid-template-columns: 1fr; }
+    .controls.lefty { grid-template-columns: 1fr; }
+    .controls.lefty .spin-wrap { order: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="bulbs"></div>
+
+<div class="app">
+  <header class="topbar">
+    <div class="stat stat-left">
+      <div class="label">Credits</div>
+      <div class="value" id="balance">1000</div>
+    </div>
+    <h1 class="title">★ ROYAL VEGAS SLOTS ★</h1>
+    <div class="stat stat-right">
+      <div class="label">Last Win</div>
+      <div class="value" id="lastWin">0</div>
+    </div>
+  </header>
+
+  <div class="status-row">
+    <div class="chip" id="freeSpinChip">🎁 Free Spins <strong id="freeSpins">0</strong></div>
+    <div class="chip" id="streakChip">🔥 Streak <strong id="streak">0</strong></div>
+    <div class="jackpot-meter">
+      <span class="jp-label">PROGRESSIVE JACKPOT</span>
+      <span class="jp-value" id="jackpot">50,000</span>
+    </div>
+  </div>
+
+  <div class="cabinet">
+    <div class="reels" id="reels">
+      <div class="reel"><div class="strip" data-reel="0"></div></div>
+      <div class="reel"><div class="strip" data-reel="1"></div></div>
+      <div class="reel"><div class="strip" data-reel="2"></div></div>
+      <div class="payline" id="payline"></div>
+      <div class="multiplier-flash" id="multFlash"></div>
+    </div>
+
+    <div class="win-banner" id="winBanner">Place your bet and spin to win!</div>
+
+    <div class="controls" id="controls">
+      <div class="bet-panel">
+        <label for="betInput">Your Bet (credits)</label>
+        <div class="bet-controls">
+          <button class="bet-btn" id="betDown" aria-label="Decrease bet">−</button>
+          <input type="number" id="betInput" min="1" value="10" />
+          <button class="bet-btn" id="betUp" aria-label="Increase bet">+</button>
+        </div>
+        <div class="quick-bets">
+          <button class="quick-bet" data-bet="5">5</button>
+          <button class="quick-bet" data-bet="25">25</button>
+          <button class="quick-bet" data-bet="100">100</button>
+          <button class="quick-bet" data-bet="max">MAX</button>
+        </div>
+      </div>
+
+      <div class="spin-wrap">
+        <button class="spin-btn" id="spinBtn">SPIN</button>
+        <button class="auto-btn" id="autoBtn">AUTO-SPIN</button>
+      </div>
+
+      <div class="bet-panel">
+        <label>Special Tokens</label>
+        <div class="tokens" id="tokens">
+          <div class="token" data-token="luck" id="tokLuck">🍀 Lucky <span id="tokLuckCount">2</span></div>
+          <div class="token" data-token="jackpot" id="tokJackpot">💎 Jackpot <span id="tokJackpotCount">1</span></div>
+          <div class="token" data-token="double" id="tokDouble">✨ 2x Win <span id="tokDoubleCount">1</span></div>
+        </div>
+        <div style="font-size:10px;opacity:0.7;margin-top:4px;text-align:center;">
+          Click a token before spinning. Earn more by winning & streaks.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="settings-row">
+    <div class="toggle-group">
+      <span>Left-Handed Mode</span>
+      <div class="toggle" id="handToggle" role="switch" aria-checked="false"></div>
+    </div>
+    <div class="toggle-group">
+      <span>Sound FX</span>
+      <div class="toggle on" id="soundToggle" role="switch" aria-checked="true"></div>
+    </div>
+    <div class="toggle-group">
+      <span>Auto-stop on big win</span>
+      <div class="toggle on" id="autoStopToggle" role="switch" aria-checked="true"></div>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    Simulated play for entertainment only. No real money. Spin responsibly.
+  </div>
+</div>
+
+<div class="celebration" id="celebration"></div>
+
+<audio id="sfxSpin"></audio>
+<audio id="sfxWin"></audio>
+<audio id="sfxJackpot"></audio>
+
+<script>
+(() => {
+  "use strict";
+
+  // ===== Symbol definitions =====
+  // value: payout multiplier when 3 match (applied to bet)
+  // weight: how often it appears on the reel
+  const SYMBOLS = [
+    { id: "cherry",   glyph: "🍒", value: 2,   weight: 28 },
+    { id: "lemon",    glyph: "🍋", value: 3,   weight: 22 },
+    { id: "bell",     glyph: "🔔", value: 5,   weight: 16 },
+    { id: "star",     glyph: "⭐", value: 8,   weight: 12 }, // triggers multiplier
+    { id: "seven",    glyph: "7️⃣", value: 15,  weight: 7  },
+    { id: "bar",      glyph: "🎰", value: 20,  weight: 5  },
+    { id: "diamond",  glyph: "💎", value: 50,  weight: 3  }, // jackpot candidate
+    { id: "gift",     glyph: "🎁", value: 0,   weight: 4  }, // awards free spins when 3 match
+  ];
+
+  const SYMBOL_HEIGHT = 100; // must match CSS .symbol height
+  const REEL_COUNT = 3;
+  const VISIBLE_ROWS = 3;    // reel shows 3 rows, middle is the payline
+  const STRIP_LENGTH = 40;   // symbols on each reel strip
+
+  // ===== Game state =====
+  const state = {
+    balance: 1000,
+    bet: 10,
+    lastWin: 0,
+    freeSpins: 0,
+    streak: 0,
+    jackpot: 50000,
+    spinning: false,
+    autoSpin: false,
+    leftHanded: false,
+    sound: true,
+    autoStopBig: true,
+    activeToken: null, // "luck" | "jackpot" | "double" | null
+    tokens: { luck: 2, jackpot: 1, double: 1 },
+    spinCount: 0, // used for periodic multiplier triggers
+  };
+
+  // ===== DOM refs =====
+  const $ = (id) => document.getElementById(id);
+  const ui = {
+    balance: $("balance"),
+    lastWin: $("lastWin"),
+    freeSpins: $("freeSpins"),
+    streak: $("streak"),
+    jackpot: $("jackpot"),
+    betInput: $("betInput"),
+    betUp: $("betUp"),
+    betDown: $("betDown"),
+    spinBtn: $("spinBtn"),
+    autoBtn: $("autoBtn"),
+    winBanner: $("winBanner"),
+    controls: $("controls"),
+    payline: $("payline"),
+    multFlash: $("multFlash"),
+    handToggle: $("handToggle"),
+    soundToggle: $("soundToggle"),
+    autoStopToggle: $("autoStopToggle"),
+    celebration: $("celebration"),
+    strips: [0, 1, 2].map(i => document.querySelector(`.strip[data-reel="${i}"]`)),
+    reels: Array.from(document.querySelectorAll(".reel")),
+    tokens: {
+      luck: $("tokLuck"),
+      jackpot: $("tokJackpot"),
+      double: $("tokDouble"),
+    },
+    tokenCounts: {
+      luck: $("tokLuckCount"),
+      jackpot: $("tokJackpotCount"),
+      double: $("tokDoubleCount"),
+    },
+  };
+
+  // ===== Build weighted symbol pool =====
+  const weightedPool = [];
+  SYMBOLS.forEach(s => {
+    for (let i = 0; i < s.weight; i++) weightedPool.push(s);
+  });
+
+  function pickSymbol(boostLucky = false) {
+    // If luck token active, bias toward higher-value symbols
+    if (boostLucky && Math.random() < 0.35) {
+      const high = SYMBOLS.filter(s => s.value >= 8 && s.id !== "gift");
+      return high[Math.floor(Math.random() * high.length)];
+    }
+    return weightedPool[Math.floor(Math.random() * weightedPool.length)];
+  }
+
+  function pickJackpotBias() {
+    // Jackpot token heavily biases toward diamond
+    if (Math.random() < 0.45) {
+      return SYMBOLS.find(s => s.id === "diamond");
+    }
+    return pickSymbol(true);
+  }
+
+  // ===== Build initial reel strips =====
+  function buildStrip(reelIndex) {
+    const strip = ui.strips[reelIndex];
+    strip.innerHTML = "";
+    // Add STRIP_LENGTH symbols + padding on top/bottom for wrap illusion
+    for (let i = 0; i < STRIP_LENGTH; i++) {
+      const sym = pickSymbol();
+      const el = document.createElement("div");
+      el.className = "symbol";
+      el.textContent = sym.glyph;
+      el.dataset.id = sym.id;
+      strip.appendChild(el);
+    }
+  }
+  for (let r = 0; r < REEL_COUNT; r++) buildStrip(r);
+
+  // Position each strip so row index 1 shows in the middle initially
+  function setStripPosition(reelIndex, topIndex) {
+    const strip = ui.strips[reelIndex];
+    strip.style.transform = `translateY(${-topIndex * SYMBOL_HEIGHT}px)`;
+  }
+  for (let r = 0; r < REEL_COUNT; r++) setStripPosition(r, 1);
+
+  // ===== Rendering helpers =====
+  function render() {
+    ui.balance.textContent = state.balance.toLocaleString();
+    ui.lastWin.textContent = state.lastWin.toLocaleString();
+    ui.freeSpins.textContent = state.freeSpins;
+    ui.streak.textContent = state.streak;
+    ui.jackpot.textContent = state.jackpot.toLocaleString();
+    ui.betInput.value = state.bet;
+    ui.betInput.disabled = state.spinning;
+    ui.betUp.disabled = state.spinning;
+    ui.betDown.disabled = state.spinning;
+
+    // Token buttons
+    ["luck", "jackpot", "double"].forEach(k => {
+      const count = state.tokens[k];
+      ui.tokenCounts[k].textContent = count;
+      const btn = ui.tokens[k];
+      btn.classList.toggle("disabled", count <= 0 || state.spinning);
+      btn.classList.toggle("active", state.activeToken === k);
+    });
+
+    // Hand mode
+    ui.controls.classList.toggle("lefty", state.leftHanded);
+    ui.handToggle.classList.toggle("on", state.leftHanded);
+    ui.soundToggle.classList.toggle("on", state.sound);
+    ui.autoStopToggle.classList.toggle("on", state.autoStopBig);
+
+    ui.autoBtn.classList.toggle("active", state.autoSpin);
+    ui.autoBtn.textContent = state.autoSpin ? "STOP AUTO" : "AUTO-SPIN";
+
+    ui.freeSpins.parentElement.classList.toggle("hot", state.freeSpins > 0);
+    ui.streak.parentElement.classList.toggle("hot", state.streak >= 3);
+  }
+
+  // ===== Bet controls =====
+  function clampBet(v) {
+    const n = Math.max(1, Math.min(state.balance || 1, Math.floor(Number(v) || 1)));
+    return n;
+  }
+  function setBet(v) {
+    state.bet = clampBet(v);
+    render();
+  }
+  ui.betUp.addEventListener("click", () => setBet(state.bet + Math.max(1, Math.floor(state.bet * 0.1))));
+  ui.betDown.addEventListener("click", () => setBet(state.bet - Math.max(1, Math.floor(state.bet * 0.1))));
+  ui.betInput.addEventListener("change", () => setBet(ui.betInput.value));
+  ui.betInput.addEventListener("blur", () => setBet(ui.betInput.value));
+  document.querySelectorAll(".quick-bet").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const v = btn.dataset.bet;
+      if (v === "max") setBet(state.balance);
+      else setBet(Number(v));
+    });
+  });
+
+  // ===== Token selection =====
+  Object.keys(ui.tokens).forEach(key => {
+    ui.tokens[key].addEventListener("click", () => {
+      if (state.spinning || state.tokens[key] <= 0) return;
+      state.activeToken = state.activeToken === key ? null : key;
+      render();
+    });
+  });
+
+  // ===== Toggles =====
+  ui.handToggle.addEventListener("click", () => {
+    state.leftHanded = !state.leftHanded;
+    render();
+  });
+  ui.soundToggle.addEventListener("click", () => {
+    state.sound = !state.sound;
+    render();
+  });
+  ui.autoStopToggle.addEventListener("click", () => {
+    state.autoStopBig = !state.autoStopBig;
+    render();
+  });
+
+  // ===== Sound via WebAudio (procedural, no files needed) =====
+  let audioCtx = null;
+  function ensureAudio() {
+    if (!state.sound) return null;
+    if (!audioCtx) {
+      try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+      catch (e) { return null; }
+    }
+    return audioCtx;
+  }
+  function beep(freq, duration = 0.08, type = "square", vol = 0.08) {
+    const ctx = ensureAudio();
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.value = vol;
+    osc.connect(gain).connect(ctx.destination);
+    osc.start();
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    osc.stop(ctx.currentTime + duration);
+  }
+  function playWinFanfare() {
+    [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, 0.18, "triangle", 0.1), i * 90));
+  }
+  function playJackpot() {
+    for (let i = 0; i < 12; i++) {
+      setTimeout(() => beep(400 + i * 80, 0.15, "sawtooth", 0.08), i * 80);
+    }
+  }
+  function playLossChime() {
+    beep(320, 0.12, "sine", 0.05);
+    setTimeout(() => beep(260, 0.18, "sine", 0.05), 120);
+  }
+  function playSpinTick() { beep(900, 0.03, "square", 0.02); }
+
+  // ===== Celebration effects =====
+  function showCelebration(text, colorClass = "gold") {
+    ui.celebration.innerHTML = "";
+    const big = document.createElement("div");
+    big.className = "big-text";
+    big.textContent = text;
+    ui.celebration.appendChild(big);
+    ui.celebration.classList.add("show");
+
+    // Confetti
+    for (let i = 0; i < 60; i++) {
+      const c = document.createElement("div");
+      c.className = "confetti";
+      c.style.left = Math.random() * 100 + "vw";
+      const colors = ["#ffd54a", "#e11d2e", "#6a3aa0", "#fff", "#ff9d00"];
+      c.style.background = colors[Math.floor(Math.random() * colors.length)];
+      c.style.animationDuration = (1.5 + Math.random() * 1.5) + "s";
+      c.style.animationDelay = Math.random() * 0.3 + "s";
+      ui.celebration.appendChild(c);
+    }
+
+    setTimeout(() => {
+      ui.celebration.classList.remove("show");
+      setTimeout(() => { ui.celebration.innerHTML = ""; }, 400);
+    }, 2200);
+  }
+
+  function flashMultiplier(mult) {
+    ui.multFlash.textContent = `×${mult}!`;
+    ui.multFlash.classList.remove("show");
+    // Force reflow to restart animation
+    void ui.multFlash.offsetWidth;
+    ui.multFlash.classList.add("show");
+  }
+
+  // ===== Spin logic =====
+  async function spin() {
+    if (state.spinning) return;
+
+    // Validate bet (free spins bypass cost)
+    const usingFreeSpin = state.freeSpins > 0;
+    if (!usingFreeSpin) {
+      if (state.bet > state.balance) {
+        ui.winBanner.textContent = "Not enough credits — lower your bet.";
+        ui.winBanner.className = "win-banner loss";
+        return;
+      }
+      state.balance -= state.bet;
+    } else {
+      state.freeSpins -= 1;
+    }
+
+    state.spinning = true;
+    state.spinCount += 1;
+    const activeToken = state.activeToken;
+    state.activeToken = null; // consume selection (actual count decrement when resolved)
+    render();
+
+    ui.winBanner.className = "win-banner";
+    ui.winBanner.textContent = usingFreeSpin ? "🎁 FREE SPIN!" : "Spinning…";
+    ui.payline.classList.remove("active");
+
+    // Decide the outcome grid first (3x3)
+    const grid = rollGrid(activeToken);
+
+    // Periodic multiplier trigger: every 7th spin or when a ⭐ lands on the payline
+    const periodicMult = (state.spinCount % 7 === 0) ? pickMultiplier() : 1;
+
+    // Animate each reel landing with a cascading delay; final reel is slow-motion
+    const landings = [];
+    for (let r = 0; r < REEL_COUNT; r++) {
+      // The strip will land such that row index `targetTop` is the top visible row.
+      // The center (payline) symbol is grid[1][r] → pick a position where
+      // strip[targetTop + 1] === grid[1][r], strip[targetTop] === grid[0][r], etc.
+      const landingTop = placeSymbolsOnStrip(r, grid[0][r], grid[1][r], grid[2][r]);
+      landings.push(landingTop);
+    }
+
+    // Start all reels spinning fast
+    ui.strips.forEach(s => s.classList.add("spinning"));
+    if (state.sound) {
+      const tickInterval = setInterval(playSpinTick, 100);
+      setTimeout(() => clearInterval(tickInterval), 2200);
+    }
+
+    // Stop reel 1 after delay
+    await wait(700);
+    await stopReel(0, landings[0], 600);
+
+    await wait(250);
+    await stopReel(1, landings[1], 700);
+
+    // Suspense build for final reel — slow-motion
+    ui.reels[2].classList.add("suspense");
+    ui.winBanner.textContent = "Here it comes…";
+    await wait(500);
+    await stopReel(2, landings[2], 1600); // slow-motion final spin
+    ui.reels[2].classList.remove("suspense");
+
+    // Evaluate win
+    const result = evaluate(grid, activeToken, periodicMult);
+
+    // Apply token consumption
+    if (activeToken && state.tokens[activeToken] > 0) {
+      state.tokens[activeToken] -= 1;
+    }
+
+    // Award payout
+    if (result.payout > 0) {
+      state.balance += result.payout;
+      state.lastWin = result.payout;
+      state.streak += 1;
+
+      // Streak rewards
+      if (state.streak > 0 && state.streak % 3 === 0) {
+        state.freeSpins += 2;
+        result.messages.push("🎁 +2 Free Spins (3-win streak!)");
+      }
+      if (state.streak > 0 && state.streak % 5 === 0) {
+        state.tokens.luck += 1;
+        result.messages.push("🍀 +1 Lucky Token");
+      }
+
+      // Progressive jackpot growth on wins
+      state.jackpot += Math.floor(state.bet * 0.5);
+
+      if (periodicMult > 1) {
+        flashMultiplier(periodicMult);
+        await wait(400);
+      }
+
+      ui.winBanner.className = "win-banner win";
+      ui.winBanner.textContent = `✨ WIN! +${result.payout.toLocaleString()} credits ` +
+        (result.messages.length ? "— " + result.messages.join(" • ") : "");
+      ui.payline.classList.add("active");
+      highlightWinners(grid, result.winningRows);
+
+      if (result.isJackpot) {
+        showCelebration("JACKPOT!!!");
+        playJackpot();
+        // On auto-spin, stop for big events
+        if (state.autoSpin && state.autoStopBig) setAuto(false);
+      } else if (result.payout >= state.bet * 10) {
+        showCelebration("BIG WIN!");
+        playWinFanfare();
+        if (state.autoSpin && state.autoStopBig && result.payout >= state.bet * 25) {
+          setAuto(false);
+        }
+      } else {
+        playWinFanfare();
+      }
+    } else {
+      // Soften the blow of losses with encouraging near-miss messaging
+      state.streak = 0;
+      state.lastWin = 0;
+      ui.winBanner.className = "win-banner loss";
+      ui.winBanner.textContent = pickSoftLossMessage(grid);
+      // Small chance of consolation: a free spin to keep things fun
+      if (Math.random() < 0.08) {
+        state.freeSpins += 1;
+        ui.winBanner.textContent += " — 🎁 Consolation Free Spin!";
+      }
+      // Progressive jackpot slowly grows even on losses
+      state.jackpot += Math.max(1, Math.floor(state.bet * 0.1));
+      playLossChime();
+    }
+
+    // Jackpot seed growth
+    state.jackpot = Math.max(50000, state.jackpot);
+
+    state.spinning = false;
+    render();
+
+    // Auto-spin continuation
+    if (state.autoSpin) {
+      await wait(result.payout > 0 ? 1400 : 700); // linger longer on wins
+      if (state.autoSpin && (state.balance >= state.bet || state.freeSpins > 0)) {
+        spin();
+      } else {
+        setAuto(false);
+      }
+    }
+  }
+
+  function pickMultiplier() {
+    const roll = Math.random();
+    if (roll < 0.55) return 2;
+    if (roll < 0.85) return 3;
+    if (roll < 0.97) return 5;
+    return 10;
+  }
+
+  function rollGrid(activeToken) {
+    // Build a 3-row × 3-col grid. The middle row (index 1) is the primary payline.
+    // Other rows are for visual variety (and could enable more paylines later).
+    const grid = [[], [], []];
+    // Bias the middle row toward wins when luck/jackpot tokens active
+    for (let c = 0; c < REEL_COUNT; c++) {
+      const mid = activeToken === "jackpot" ? pickJackpotBias()
+                : activeToken === "luck" ? pickSymbol(true)
+                : pickSymbol();
+      grid[1][c] = mid;
+      grid[0][c] = pickSymbol();
+      grid[2][c] = pickSymbol();
+    }
+    // With luck token, occasionally force a match on the payline
+    if (activeToken === "luck" && Math.random() < 0.35) {
+      const target = grid[1][0];
+      grid[1][1] = target;
+      if (Math.random() < 0.6) grid[1][2] = target;
+    }
+    if (activeToken === "jackpot" && Math.random() < 0.35) {
+      const diamond = SYMBOLS.find(s => s.id === "diamond");
+      grid[1][0] = diamond; grid[1][1] = diamond; grid[1][2] = diamond;
+    }
+    return grid;
+  }
+
+  // Place the three target symbols on the reel strip at a random wrap-friendly position,
+  // and return the "top" index so that strip[top + 1] is the payline symbol.
+  function placeSymbolsOnStrip(reelIndex, topSym, midSym, botSym) {
+    const strip = ui.strips[reelIndex];
+    const children = strip.children;
+    // Pick a landing index such that we have at least a few rows above for spin-down
+    const landingTop = 20 + Math.floor(Math.random() * (STRIP_LENGTH - 25));
+    // Overwrite the three visible cells
+    setCell(children[landingTop], topSym);
+    setCell(children[landingTop + 1], midSym);
+    setCell(children[landingTop + 2], botSym);
+    // Also randomise a few symbols above so the fast-spin look is varied
+    for (let i = Math.max(0, landingTop - 10); i < landingTop; i++) {
+      setCell(children[i], pickSymbol());
+    }
+    return landingTop;
+  }
+  function setCell(el, sym) {
+    el.textContent = sym.glyph;
+    el.dataset.id = sym.id;
+    el.classList.remove("winner");
+  }
+
+  function stopReel(reelIndex, landingTop, durationMs) {
+    return new Promise((resolve) => {
+      const strip = ui.strips[reelIndex];
+      strip.classList.remove("spinning");
+      // Smooth land with CSS transition. Apply a custom duration for slow-motion.
+      strip.style.transition = `transform ${durationMs}ms cubic-bezier(0.15, 0.85, 0.25, 1.0)`;
+      // Land so that row at `landingTop` is the top visible row,
+      // meaning translateY = -landingTop * SYMBOL_HEIGHT
+      strip.style.transform = `translateY(${-landingTop * SYMBOL_HEIGHT}px)`;
+
+      const onEnd = () => {
+        strip.removeEventListener("transitionend", onEnd);
+        strip.style.transition = "";
+        // small "stop" bounce for feel
+        if (state.sound) beep(220, 0.06, "square", 0.06);
+        resolve();
+      };
+      strip.addEventListener("transitionend", onEnd, { once: true });
+      // Fallback in case transitionend misfires
+      setTimeout(onEnd, durationMs + 200);
+    });
+  }
+
+  function highlightWinners(grid, winningRows) {
+    winningRows.forEach(rowIdx => {
+      for (let c = 0; c < REEL_COUNT; c++) {
+        const strip = ui.strips[c];
+        const children = strip.children;
+        // Determine which child is currently on that row.
+        const transform = strip.style.transform;
+        const match = /translateY\(([-\d.]+)px\)/.exec(transform);
+        const topIndex = match ? Math.round(-parseFloat(match[1]) / SYMBOL_HEIGHT) : 0;
+        const targetChild = children[topIndex + rowIdx];
+        if (targetChild) targetChild.classList.add("winner");
+      }
+    });
+    // Clear after a moment
+    setTimeout(() => {
+      document.querySelectorAll(".symbol.winner").forEach(el => el.classList.remove("winner"));
+    }, 2500);
+  }
+
+  function evaluate(grid, activeToken, periodicMult) {
+    const messages = [];
+    let payout = 0;
+    let winningRows = [];
+    let isJackpot = false;
+
+    // Primary payline: middle row (index 1)
+    const mid = grid[1];
+    if (mid[0].id === mid[1].id && mid[1].id === mid[2].id) {
+      const sym = mid[0];
+      winningRows.push(1);
+      if (sym.id === "gift") {
+        // 3 gifts = free spins bonanza, no direct payout
+        state.freeSpins += 8;
+        messages.push("🎁 +8 FREE SPINS!");
+      } else if (sym.id === "diamond") {
+        // Jackpot!
+        payout += state.jackpot;
+        state.jackpot = 50000; // reset
+        isJackpot = true;
+        messages.push(`💎 PROGRESSIVE JACKPOT!`);
+      } else {
+        payout += sym.value * state.bet;
+        messages.push(`${sym.glyph}×3`);
+      }
+    } else {
+      // Check 2-of-a-kind adjacent on payline for small consolation wins
+      const twoKind = mid[0].id === mid[1].id || mid[1].id === mid[2].id;
+      if (twoKind && mid[1].value > 0) {
+        payout += Math.floor(mid[1].value * state.bet * 0.4);
+        winningRows.push(1);
+        messages.push(`${mid[1].glyph}×2`);
+      }
+    }
+
+    // Bonus paylines: top and bottom rows (half payout)
+    [0, 2].forEach(rowIdx => {
+      const row = grid[rowIdx];
+      if (row[0].id === row[1].id && row[1].id === row[2].id && row[0].id !== "gift") {
+        const sym = row[0];
+        if (sym.id === "diamond") {
+          payout += Math.floor(state.jackpot * 0.25);
+          messages.push("💎 Diamond line!");
+        } else {
+          payout += Math.floor(sym.value * state.bet * 0.5);
+          messages.push(`${sym.glyph} bonus line`);
+        }
+        winningRows.push(rowIdx);
+      }
+    });
+
+    // Star symbol on payline triggers extra multiplier
+    const starsOnPayline = mid.filter(s => s.id === "star").length;
+    if (starsOnPayline >= 2 && payout > 0) {
+      const starMult = starsOnPayline;
+      payout = payout * starMult;
+      messages.push(`⭐ Star multiplier ×${starMult}`);
+    }
+
+    // Apply periodic multiplier
+    if (periodicMult > 1 && payout > 0) {
+      payout = payout * periodicMult;
+      messages.push(`🎯 Bonus ×${periodicMult}`);
+    }
+
+    // Apply Double token
+    if (activeToken === "double" && payout > 0) {
+      payout *= 2;
+      messages.push("✨ 2x Token");
+    }
+
+    return { payout, winningRows, messages, isJackpot };
+  }
+
+  const softLossMessages = [
+    "So close — that next spin feels lucky!",
+    "Almost! The reels are warming up.",
+    "Nearly there — your turn is coming!",
+    "Just shy of a match — keep the faith!",
+    "A whisker away from a win!",
+    "The jackpot is getting bigger for you!",
+  ];
+  function pickSoftLossMessage(grid) {
+    // If there's a near-miss (2 matching on payline), call it out
+    const mid = grid[1];
+    if (mid[0].id === mid[1].id || mid[1].id === mid[2].id) {
+      return `So close — two ${mid[1].glyph} in a row! Next spin could be the one.`;
+    }
+    return softLossMessages[Math.floor(Math.random() * softLossMessages.length)];
+  }
+
+  // ===== Auto-spin =====
+  function setAuto(on) {
+    state.autoSpin = on;
+    render();
+    if (on && !state.spinning) spin();
+  }
+  ui.autoBtn.addEventListener("click", () => setAuto(!state.autoSpin));
+
+  // ===== Spin button =====
+  ui.spinBtn.addEventListener("click", () => {
+    if (state.spinning) return;
+    spin();
+  });
+
+  // Keyboard: spacebar to spin
+  document.addEventListener("keydown", (e) => {
+    if (e.code === "Space" && document.activeElement !== ui.betInput) {
+      e.preventDefault();
+      if (!state.spinning) spin();
+    }
+  });
+
+  // ===== Utility =====
+  function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  // ===== Persistence =====
+  const SAVE_KEY = "royalVegasSlots.v1";
+  function save() {
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify({
+        balance: state.balance,
+        bet: state.bet,
+        freeSpins: state.freeSpins,
+        jackpot: state.jackpot,
+        tokens: state.tokens,
+        leftHanded: state.leftHanded,
+        sound: state.sound,
+        autoStopBig: state.autoStopBig,
+      }));
+    } catch (e) { /* ignore */ }
+  }
+  function load() {
+    try {
+      const raw = localStorage.getItem(SAVE_KEY);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      Object.assign(state, data);
+      // Guard: if bankrupt on load, grant a small restart bonus
+      if (state.balance < 10) state.balance = 500;
+    } catch (e) { /* ignore */ }
+  }
+  load();
+  setInterval(save, 3000);
+  window.addEventListener("beforeunload", save);
+
+  // ===== Kick off =====
+  render();
+})();
+</script>
+</body>
+</html>
