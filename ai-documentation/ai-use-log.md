@@ -717,3 +717,281 @@ Final answer must be only CSS code.
 No explanation.
 No progress narration.
 No “still writing styles.”
+
+## Prompt 6:
+
+**The Goal With This Prompt is a full visual overhaul to match ornate Asian-casino references (88 Fortunes, Reel King, Dragon Lines)**
+- Learned from prompts 4 and 5: vague "add feeling" asks fail. Named concrete hex codes, specific CSS techniques (border-image, box-shadow stacks, SVG data-URI filigree), and explicit keep/don't-change lists.
+- Created a new file (slot-machine-v6.html) rather than editing v5, so the AI couldn't hide behind "same as before."
+- Asked for a 3-bullet self-verification at the end to force the AI to check its own output against the references.
+![Slot machine screenshot](ReferenceImages/1.jpeg)
+![Slot machine screenshot](ReferenceImages/2.jpg)
+![Slot machine screenshot](ReferenceImages/3.jpg)
+![Slot machine screenshot](ReferenceImages/4.jpg)
+
+Create versions/slot-machine-v6.html by copying v5 as the starting point, then re-theming it to match the three reference screenshots (88 Fortunes, Reel King, Dragon Lines — ornate Asian-casino / royal-gold aesthetic).
+
+Keep ALL game logic and JS untouched. Keep the DOM structure of v5 intact — only rename CSS classes if needed. This is a visual overhaul, not a rewrite.
+
+SPECIFIC CHANGES REQUIRED (not "feel" — actual properties):
+
+1. Color palette — replace v5's purple/navy/neon-teal with:
+   - Background: deep crimson red (#8B0000 → #450000 radial gradient) with a subtle gold damask/filigree pattern (CSS-only, using repeating-linear-gradient or SVG data-URI)
+   - Primary gold: #FFD700 / #FFA500 (warmer than v5's #ffd000)
+   - Accent: imperial red #C8102E, dark lacquer #2B0000
+   - Remove all neon-teal and neon-pink — no cyberpunk colors
+
+2. Borders & frames — the reference images all use thick ornate gold frames with corner flourishes:
+   - Cabinet: 8–12px gold gradient border, inner gold inlay line, rounded corners with decorative corner blocks
+   - Use box-shadow layers (inset gold highlight + outer drop shadow) to fake the 3D beveled look
+   - Add CSS pseudo-elements for Greek-key / meander trim along top and bottom of the reel area (like Dragon Lines)
+
+3. Symbols — keep the JS emoji values unchanged, but style .sym with:
+   - Oversized (font-size up from 48px → 64–72px)
+   - Gold drop-shadow + dark outline (text-shadow stack) so they pop on red like the reference screenshots
+
+4. Jackpot panel — v5 has a single jackpot bar. Restyle it as a stack of 4 tiers (GRAND / MAJOR / MINOR / MINI), each in its own gold-bordered black readout box, matching the 88 Fortunes layout. Values can be hardcoded or split from the single jackpot number — don't rewire JS.
+
+5. Spin button — replace v5's red circular button with a large gold circular button containing a curved arrow (use ↻ or an SVG), matching the 88 Fortunes / Dragon Lines style. Gold radial gradient, thick gold ring border.
+
+6. Bottom status bar — BALANCE / STAKE (bet) / WIN shown in three ornate gold-framed plaques, like the reference.
+
+7. Title — restyle "SPINFIRE" header in an ornate gold serif/display font (try Cinzel, Playfair Display, or keep Bebas Neue but add heavy gold gradient + red outer stroke). Remove flame emojis.
+
+CONSTRAINTS:
+- Do not change any JS. Do not change symbol emojis, game math, token logic, or DOM IDs.
+- Do not add external images or icon libraries (SVG inline is fine).
+- The page must still be non-scrollable (100vh, overflow hidden) like v5.
+- Show me the full v6 file when done.
+
+When finished, list in 3 bullets what you changed visually so I can verify against the references.
+
+## Prompt 7:
+
+**Goal: close the remaining gaps between v6 and the reference screenshots, plus swap "Last Win" for a session-cumulative "Total Winnings"**
+- Re-examined all four reference images. Key gaps in v6: reels are dark (refs use cream/parchment so symbols pop); balance/win plaques should live at the bottom of the cabinet (88 Fortunes, Dragon Lines); jackpot tiers should stack vertically on the right at wide widths; missing side payline indicators (Reel King shows 1-20).
+- Added a small, surgical JS delta (`lastWin` → `totalWin` with += semantics, reset on refill) — scoped to 4 touch points so the AI can't drift into a rewrite.
+- Included an explicit "skip and note rather than silently rename" backstop — last resort defence against the AI quietly breaking ids JS depends on.
+![Slot machine screenshot](ReferenceImages/1.jpeg)
+![Slot machine screenshot](ReferenceImages/2.jpg)
+![Slot machine screenshot](ReferenceImages/3.jpg)
+![Slot machine screenshot](ReferenceImages/4.jpg)
+
+Create versions/slot-machine-v7.html by copying v6. Make the changes below and NOTHING ELSE. This brings the machine closer to the 88 Fortunes / Reel King / Dragon Lines reference layout.
+
+=== JS CHANGES (small, surgical) ===
+
+1. Replace "Last Win" with "Total Winnings" — a cumulative session counter.
+   - In state S, rename `lastWin` → `totalWin`, initialize 0.
+   - On a winning spin: `S.totalWin += payout` (do NOT replace).
+   - On a losing spin: do nothing to totalWin.
+   - Reset totalWin back to 0 only when the credit-refill countdown completes (fresh session).
+   - Update the label in HTML from "Last Win" to "Total Winnings".
+   - Rename the DOM id `winVal` → `totalWinVal` and update the two JS references. Rename `.bal-card.last-win` → `.bal-card.total-win`.
+   - Persist `totalWin` in localStorage alongside balance.
+   - Do NOT touch any other game math.
+
+2. Add a small "SPACE = SPIN" hint line under the spin button, styled in the existing `.tok-hint` style. No new JS — just static HTML text.
+
+=== CSS / LAYOUT CHANGES ===
+
+3. Reel background — switch from dark red to parchment cream like Dragon Lines:
+   - `.reel` background: linear-gradient(180deg, #FFF4D6 0%, #F3E4B0 50%, #FFF4D6 100%)
+   - Add inner red frame: inset 0 0 0 2px #8B0000
+   - The reel::before/after fade gradients need to fade to rgba(255,244,214,0.97) instead of dark (so edges match new bg).
+   - `.sym` filter changes: drop-shadow(0 2px 0 rgba(0,0,0,0.4)) drop-shadow(0 0 6px rgba(200,16,46,0.25)) — subtle red glow, not gold, so symbols read against cream.
+
+4. Move the balance bar from above the cabinet to below the win-banner (inside the cabinet, above .controls). Rename class stays `balance-bar` but restyle as three 88-Fortunes-style gold ornate plaques with:
+   - Inset gold inlay line (box-shadow inset 0 0 0 1px #FFF4B0)
+   - Gold corner notches via clip-path or pseudo-elements (polygon beveled corners)
+   - Labels: "BALANCE" / "FREE SPINS" / "TOTAL WIN"
+   - Move the existing `.free-spin-pill` element into the middle slot, restyled as a matching plaque (not a pill). It keeps id fsPill + id fsVal so JS still works.
+
+5. Payline side indicators — add two thin vertical strips flanking the reels inside `.reels-wrap`:
+   - `.payline-col` on each side, 20px wide
+   - 3 numbered cells (1, 2, 3) stacked — matches v6's 3 paylines (top, mid, bot)
+   - Gold border, dark red fill, gold numerals in Cinzel serif
+   - The middle cell highlights gold when `.payline-mid.active` is on. Pure CSS :has() or sibling selector, no JS.
+
+6. Symbol cells — give each `.sym` a subtle rounded rectangle backdrop so it reads like a tile in the reference screenshots:
+   - `.sym::before` at 85% size, border-radius 8px, background linear-gradient(180deg, rgba(255,215,0,0.12), rgba(200,16,46,0.08)), z-index behind the glyph.
+   - No effect on winner/non-winner state logic.
+
+7. Jackpot tiers — restructure from horizontal (4 columns) to vertical stack on the RIGHT side of the cabinet like 88 Fortunes:
+   - Keep the same 4 tier elements and #jackpotVal id.
+   - Use CSS grid on the .app: place the jackpot-bar as a column right of the cabinet at widths ≥900px; stay horizontal-above at narrower widths.
+   - Each tier becomes a small horizontal plaque (label on left, value on right) matching the 88 Fortunes readouts.
+
+=== CONSTRAINTS ===
+
+- Preserve ALL other DOM ids, classes, and JS logic.
+- No external images. Inline SVG OK.
+- Stay non-scrollable (100vh + overflow hidden).
+- Total Winnings must persist across spins within a session and reset only on refill.
+- When done, show a 3-bullet diff summary: (a) what moved, (b) what recolored, (c) what I verified still works (bet, spin, tokens, modal, refill countdown).
+
+If any single item above would break an existing id/class that JS relies on, skip that item and note it in the diff summary rather than silently renaming.
+
+## Prompt 8:
+
+**Goal: fix the off-center layout from v7, expand horizontal space usage, and add real slot-machine flavor**
+- Diagnosis: v7's cabinet + jackpot IS mathematically centered inside main-row, but the cabinet is the heavy visual mass and sits left-of-center inside the row, so the eye reads the whole thing as left-shifted. Adding a matching-weight paytable panel on the LEFT rebalances the visual center AND adds slot-machine authenticity (88 Fortunes "CREDITS" panel).
+- Tightened the jackpot label fix into specific CSS deltas (min-width off, letter-spacing 2px, clamp font) so the AI can't hand-wave "made it smaller."
+- Added mascot medallions + denomination strip as small-scope cosmetic wins, not a redesign.
+![Slot machine screenshot](ReferenceImages/1.jpeg)
+![Slot machine screenshot](ReferenceImages/2.jpg)
+![Slot machine screenshot](ReferenceImages/3.jpg)
+![Slot machine screenshot](ReferenceImages/4.jpg)
+
+Create versions/slot-machine-v8.html by copying v7. Apply these fixes and additions. NOTHING ELSE.
+
+=== BLOCKING: FIX OFF-CENTER LAYOUT ===
+
+1. v7 renders cabinet+jackpot left-biased at wide viewports because the cabinet (heavy visual mass) sits to the left of the main-row center. Fix by ADDING a matching-weight paytable panel on the LEFT of the cabinet.
+
+2. Also force centering explicitly: .main-row { margin-inline: auto; }, .app { width: 100%; }.
+
+3. Widen main-row at wide widths: max-width 1280px (was 1080). At ≥1240px show all 3 columns (paytable | cabinet | jackpot). At 1040-1239px, keep cabinet+jackpot only (paytable hidden). At <1040px, stack column-reverse (jackpot above cabinet).
+
+=== NEW: PAYTABLE SIDE PANEL (slot-machine flavor) ===
+
+4. Add `.paytable-panel` as first child of .main-row (before .cabinet):
+   - width 200px, flex-shrink:0
+   - Dark red base matching jackpot-bar styling (gold border, inner inlay line, inset shadow)
+   - Header: "PAY TABLE" in Cinzel small-caps gold, centered
+   - 5 rows stacked vertically. Each row is a mini plaque:
+       5 💎  =  JACKPOT
+       5 🎰  =  100 × BET
+       5 7️⃣  =   75 × BET
+       5 ⭐  =   40 × BET
+       5 🔔  =   25 × BET
+   - Row styling: dark bg, 2px gold border, 8px rounded, label (symbol + count) on left, payout on right, Cinzel font small-caps.
+   - Display:none below 1240px viewport.
+   - Purely decorative, no JS wiring.
+
+=== FIX JACKPOT LABEL OVERFLOW ===
+
+5. GRAND/MAJOR/MINOR/MINI label pills feel cramped:
+   - .jp-tier-label: remove min-width:62px. Reduce letter-spacing to 2px (was 3). font-size clamp(9px,1.3vw,12px).
+   - In vertical mode (≥1040px), the horizontal jp-tier plaque needs padding 6px 12px and gap 10px between label pill and value.
+   - jp-tier-val: add text-align:right and font-size clamp(14px,2vw,20px) in vertical mode so numbers don't overflow.
+
+=== MASCOT MEDALLIONS ===
+
+6. Flank the SPINFIRE title with two decorative mascot circles (like 88 Fortunes' smiling kids):
+   - Inside .header-badge, add one .mascot.left before the title and one .mascot.right after.
+   - Each: 52x52px circle, gold radial-gradient background, 3px gold border, inset gold highlight, a 🏮 emoji (lantern) centered at 28px.
+   - Gentle bob animation: translateY(-3px) to translateY(3px), 2.4s ease-in-out alternate. Left and right offset by -1.2s for alternating bob.
+
+=== CABINET COSMETICS ===
+
+7. Add a thin denomination strip inside the cabinet, after .controls:
+   HTML: <div class="deno-strip">× 0.02 PER SPIN · 3 LINES ACTIVE · RTP 96.2%</div>
+   Style: Cinzel font 10px letter-spacing 3px gold text centered on dark red with 1px gold top border, padding 6px 0. margin-top:8px.
+
+=== CONSTRAINTS ===
+
+- Don't change JS game logic. Preserve all JS-facing DOM ids.
+- Don't modify the reel cream background, the spin button, or the balance plaques (they look good).
+- Stay non-scrollable (100vh + overflow hidden). If wider main-row pushes content off screen vertically, reduce cabinet padding from 12px to 10px.
+- When done, 3-bullet diff: (a) how centering is now resolved, (b) what shows at 1400px vs 1100px vs 900px, (c) anything skipped and why.
+
+## Prompt 9:
+
+**Goal: fix a breakpoint regression from v8 and add two "feels alive" behaviors that transform the app from styled page into functional slot cabinet**
+- v8's paytable only appears at ≥1240px, so standard 1366-wide laptops still see the left-biased cabinet. Lowering the breakpoint to 1100px (while shrinking panel widths to fit) gets the paytable visible on typical hardware.
+- Credit tick-up animation is the single biggest "feels like a real slot" upgrade — balance jumping from 1000→1300 instantly vs. ramping over ~700ms is a night-and-day experience change. Same treatment for Total Winnings.
+- Jackpot values being frozen is a dead giveaway that the machine isn't real. Adding slow independent ticker intervals for each of the 4 tiers (GRAND fastest, MINI slowest) sells the progressive illusion without touching game math.
+- Gave the AI exact code snippets (tickCounter helper, jpTicker structure, precise intervals) because "animate the numbers" is the kind of vague ask that gets you either nothing or a rewrite.
+
+Create versions/slot-machine-v9.html by copying v8. Apply these three changes. Nothing else.
+
+=== 1. FIX PAYTABLE BREAKPOINT (centering regression) ===
+
+The paytable only shows at ≥1240px, so 1366-wide laptops still see the cabinet left-biased. Lower the threshold so the paytable shows on typical laptops.
+- Paytable panel width: 200px → 160px.
+- Jackpot bar width (wide-mode): 210px → 180px.
+- Shift the 3-column breakpoint from @media(min-width:1240px) to @media(min-width:1100px). Keep 1040-1099px as cabinet+jackpot only.
+- Main-row max-width at 3-col tier: 1280px → 1180px.
+- Paytable row font-size bumped down slightly so content fits 160px: pt-label 11px, pt-payout 10px, pt-sym 20px.
+- Verify at 1366px viewport: all 3 columns visible. At 1100-1239px: paytable visible. At 1040-1099px: paytable hidden. Below 1040px: stacked.
+
+=== 2. CREDIT TICK-UP ANIMATION ===
+
+Replace instant balance/totalWin text updates with a smooth ramp. Add a helper near the top of the IIFE (above render):
+
+```
+const counterAnims = new WeakMap();
+function tickCounter(el, to){
+  const raw = el.textContent.replace(/[^0-9-]/g,'');
+  const from = parseInt(raw) || 0;
+  if(from === to){ el.textContent = to.toLocaleString(); return; }
+  const prev = counterAnims.get(el);
+  if(prev) cancelAnimationFrame(prev);
+  const delta = Math.abs(to - from);
+  const duration = Math.min(1400, 280 + delta * 1.2);
+  const start = performance.now();
+  const step = (now) => {
+    const t = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    const v = Math.round(from + (to - from) * eased);
+    el.textContent = v.toLocaleString();
+    if(t < 1) counterAnims.set(el, requestAnimationFrame(step));
+    else counterAnims.delete(el);
+  };
+  counterAnims.set(el, requestAnimationFrame(step));
+}
+```
+
+In render(), replace `UI.bal.textContent=S.balance.toLocaleString()` with `tickCounter(UI.bal, S.balance)` and same for totalWin. Everything else in render() stays instant.
+
+=== 3. JACKPOT MICRO-TICKERS ===
+
+Give each of the 4 jackpot tiers a slow live-increment so the panel feels alive.
+
+HTML: add ids to the three non-GRAND tier value spans:
+- id="jpMajorVal" on the 8,888 span
+- id="jpMinorVal" on the 888 span
+- id="jpMiniVal" on the 88 span
+(jackpotVal already has its id — GRAND)
+
+JS additions at the bottom of the IIFE (after render() call):
+
+```
+const jpTicker = {
+  major: 8888, minor: 888, mini: 88,
+  majorEl: $("jpMajorVal"), minorEl: $("jpMinorVal"), miniEl: $("jpMiniVal"),
+};
+setInterval(() => {
+  if(S.spinning || S.refilling) return;
+  S.jackpot += 1;
+  UI.jp.textContent = S.jackpot.toLocaleString();
+}, 1800);
+setInterval(() => {
+  if(S.spinning || S.refilling) return;
+  jpTicker.major += 1;
+  jpTicker.majorEl.textContent = jpTicker.major.toLocaleString();
+}, 3500);
+setInterval(() => {
+  if(S.spinning || S.refilling) return;
+  jpTicker.minor += 1;
+  jpTicker.minorEl.textContent = jpTicker.minor.toLocaleString();
+}, 6000);
+setInterval(() => {
+  if(S.spinning || S.refilling) return;
+  jpTicker.mini += 1;
+  jpTicker.miniEl.textContent = jpTicker.mini.toLocaleString();
+}, 9000);
+```
+
+Use these exact intervals. The tickers must pause during spin/refill so the numbers don't race during the suspense moments.
+
+Do NOT persist the tier values in localStorage — they reset on reload each session.
+
+=== CONSTRAINTS ===
+
+- Don't touch game math, spin logic, refill, or the KEY value.
+- Don't change DOM beyond adding 3 ids and the helper function.
+- Don't modify styling outside the paytable breakpoint changes.
+
+When done, 3-bullet diff: (a) what breakpoints changed, (b) what's animated now, (c) what you verified still works (spin, refill, tokens, modal, bet).
