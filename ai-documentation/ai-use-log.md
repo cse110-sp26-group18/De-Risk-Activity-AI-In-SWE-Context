@@ -659,3 +659,61 @@ Design:
 Output format:
 - Show only the exact CSS rules to add or replace.
 - If replacing existing CSS, say the selector name and provide only that replacement block.
+
+## Prompt 5:
+
+**The Goal With This Prompt is to add theme and feeling to the website**
+- So not much feeling was added. I changed it so it doesn't scroll though!
+- Honestly it is infuriating how bad the ai is.
+![Slot machine screenshot](ReferenceImages/1.jpeg)
+![Slot machine screenshot](ReferenceImages/2.jpg)
+![Slot machine screenshot](ReferenceImages/3.jpg)
+![Slot machine screenshot](ReferenceImages/4.jpg)
+Make ONE focused CSS-only visual update.
+
+Goal:
+Make the existing slot machine look more like the reference images: a full-screen themed slot game with a dark carnival/joker/casino feel.
+
+Important:
+- Change CSS only.
+- Do not edit JavaScript.
+- Do not edit HTML.
+- Do not change game logic.
+- Do not rename classes or IDs.
+- Do not add new features.
+- Do not add a settings modal.
+- Do not use external images.
+- Do not rewrite the whole project.
+- Output only the CSS blocks you changed.
+
+What to change:
+1. Make the visible page full-screen and non-scrollable.
+   - Use `height: 100vh` / `min-height: 100vh`
+   - Use `overflow: hidden`
+   - Make sure the main outer wrapper also fits inside the viewport.
+
+2. Change the visible background/theme only:
+   - Dark purple base
+   - Deep red carnival/casino accents
+   - Gold glow/highlight effects
+   - Use CSS gradients, radial glows, borders, and shadows
+   - Theme should feel like carnival/joker/casino, similar to the reference images.
+
+3. Make existing slot symbols look carnival/joker themed through CSS only.
+   - Do not change the emoji/text values in JavaScript.
+   - Only style the existing symbols with brighter colors, outlines, shadows, gold borders, glow, or card-like styling.
+
+Do NOT:
+- Create new layout sections.
+- Move controls around.
+- Add/remove buttons.
+- Change the reel logic.
+- Change symbol arrays in JavaScript.
+- Add image URLs.
+
+If the `body` background is hidden, find the visible outer container such as `#root`, `.app`, `.container`, `.game`, `.slot-machine`, or similar, and update only its background-related CSS.
+
+Final answer must be only CSS code.
+No explanation.
+No progress narration.
+No “still writing styles.”
