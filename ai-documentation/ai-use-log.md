@@ -23,6 +23,9 @@ Create a slot machine app that includes the following:
 
 
 ## Prompt 3
+**Notes Regarding Prompt 3**
+- I thought it was a good idea to give it an example of html of a real slots machine website
+- Unfortunately it barely changed anything and barely worked. 
 **Giving Inspiration**
 - Use this websites https://play.slotomania.com/slots/?pid=googleadwords_int&clickid=CjwKCAjwnZfPBhAGEiwAzg-VzA_mnnTmIXEoQC8J4tjIQ6z6fvQDFrHyLY9ktUROi7ZsD6I2LKzmPRoC0WcQAvD_BwE&c=SM_UA_Com_Google_US_Search_Generic_tCPA_Performance_291020&af_c_id=11499958977&af_adset_id=117848231248&af_ad_id=716416401297&af_siteid=&af_sub1=kwd-40994351&af_sub3=e&af_keywords=free%20online%20slots&lv=1&ch=ua&afp=googleadwords_int&p1=free%20online%20slots&p2=e&p3=&campaign_id=11499958977&adset_name=117848231248&adset=117848231248&crt=716416401297&siteid=&sub1=e&sub2=&sub4=9031300&keywords=free%20online%20slots&cmp=SM_UA_Com_Google_US_Search_Generic_tCPA_Performance_291020&gad_source=1&gad_campaignid=11499958977&gbraid=0AAAAADMpqx9tPwYqtRi8sFHRKOaI0YcM-&gclid=CjwKCAjwnZfPBhAGEiwAzg-VzA_mnnTmIXEoQC8J4tjIQ6z6fvQDFrHyLY9ktUROi7ZsD6I2LKzmPRoC0WcQAvD_BwE html as reference and insiration for our slots website. Keep our slots website to one page and do not worry about a back button in the top left corner:
 
@@ -604,4 +607,35 @@ Create a slot machine app that includes the following:
 >
 
 ## Prompt 4:
+**Changing the look**
+ - So this prompt did nothing basically, it changed literally nothing and nothing changed from the look of the website. 
 
+
+Refine the current slot machine UI. Do not rebuild from scratch.
+
+Make exactly ONE CSS-only change:
+
+Change only the page background to a dark carnival/casino theme using CSS gradients.
+
+Hard rules:
+- Edit only CSS.
+- Do not edit HTML.
+- Do not edit JavaScript.
+- Do not change layout.
+- Do not add a settings button.
+- Do not add a modal.
+- Do not change slot symbols.
+- Do not use external images.
+- Do not rewrite the whole file.
+- Do not explain or narrate progress.
+- Do not say “writing styles” or “still writing styles.”
+
+Design:
+- Dark purple base
+- Deep red accents
+- Small gold glow/highlight effect
+- Carnival/casino feeling, but subtle
+
+Output format:
+- Show only the exact CSS rules to add or replace.
+- If replacing existing CSS, say the selector name and provide only that replacement block.
