@@ -1368,3 +1368,28 @@ Do NOT use external images.
 Ensure the page remains non-scrollable (100vh).
 
 Provide a 2-bullet diff: (a) How you have made sure the mute and info button work now on smaller screens, (b) How you have added features to make the effects of a win bigger (c) How you have fixed the reel spin speed issue (d) How you have added the competitive icon and features of that on to the page
+
+
+## Prompt 16 
+Using the slot-machine-v15.html as the base use the rest of this prompt as the refinement for it and make a new html file called slot-machine-v16.html. 
+Goal: Making the game more lively. What this means is being able to change the theme and also fixing the spin elements. The game itself seems to be working alright but the fun effect of it still needs to be fixed.
+
+== 1. Creating themes ==
+I want you to disect the different images in ReferenceImages and understand their breakdown of color schemes and different fonts. Now maintaing the theme we already have create a couple of different themed type of layouts similar to the one in the reference images. So now create another button like the leaderboard button or the info button which will show up with different themes that the user can select to change the theme of their slot machine. So about 5 different other themes need to be created to be changed to depending on the user's choice. But make two of them locked for now and can only be unlocked if the user wins them through the slots
+
+== 2. Fixing the slot machine elements ==
+While also creating the themes, create new element images for the reels so that they are more like the reference image with more gold and more like fancy looking elements instead of basic emojis. 
+
+== 3. Create more comments ==
+On each function and for every css block even in the html a lot of the comments just have the title of what that block does. What I need you to do is to create more detailed comments about what each section does and their variables so that for futrue reference we may be able to change it. 
+
+== CONSTRAINTS ===
+
+Do NOT change anything about any of css logic of the original idea just create new variables that can be switched out depending on the theme that the user selects. 
+
+Do NOT change any of the actually already js logic just add new ones to add the new theme button and the selecting of new themes. 
+
+Ensure the page remains non-scrollable (100vh).
+
+Provide a 2-bullet diff: (a) How you have created the new themes, (b) How you have added new reel elements to make them more casino like (c) How you have added more comments and how the detail will be
+
