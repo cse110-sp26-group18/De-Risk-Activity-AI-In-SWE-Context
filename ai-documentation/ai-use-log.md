@@ -995,3 +995,278 @@ Do NOT persist the tier values in localStorage — they reset on reload each ses
 - Don't modify styling outside the paytable breakpoint changes.
 
 When done, 3-bullet diff: (a) what breakpoints changed, (b) what's animated now, (c) what you verified still works (spin, refill, tokens, modal, bet).
+
+## Prompt 10:
+Goal: Relocate system controls to the Top-Left and add a functional Mute toggle UI
+
+Diagnosis: In v9, the #infoBtn sits isolated in the top-right. To match premium slot cabinets (like 88 Fortunes), system-level controls should be clustered. Moving the Info button to the top-left and pairing it with a new Mute button creates a professional "System Bar" feel and balances the visual weight against the top-right's empty space.
+
+Approach: Create a dedicated .top-ctrl-bar container. Use CSS-only techniques for the "muted" visual state (a red slash) to avoid needing external image assets.
+
+Create versions/slot-machine-v10.html by copying v9. Apply these changes. NOTHING ELSE.
+
+=== 1. HTML STRUCTURE (Relocation) ===
+
+Locate the <button class="info-btn" id="infoBtn" ...> currently at the top of the <body>.
+
+Wrap it inside a new container:
+
+HTML
+<div class="top-ctrl-bar">
+  <button class="ctrl-btn" id="infoBtn" title="How to Play">i</button>
+  <button class="ctrl-btn" id="muteBtn" title="Toggle Sound">
+    <span class="icon">🔊</span>
+  </button>
+</div>
+Remove the old standalone #infoBtn entry.
+
+=== 2. CSS STYLING (Theming & Positioning) ===
+
+Remove existing styles for .info-btn.
+
+Add new styles:
+
+.top-ctrl-bar: position: fixed; top: 18px; left: 18px; z-index: 100; display: flex; gap: 10px;
+
+.ctrl-btn:
+
+width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--gold);
+
+background: linear-gradient(180deg, #FFD700, #C9A227); color: var(--red-dark);
+
+font-family: 'Cinzel', serif; font-size: 18px; font-weight: 900; cursor: pointer;
+
+display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+
+box-shadow: inset 0 0 0 1px var(--gold-bright), 0 0 12px rgba(255,215,0,0.4), 0 4px 10px rgba(0,0,0,0.5);
+
+.ctrl-btn:hover: transform: scale(1.1); box-shadow: 0 0 20px var(--gold);
+
+Mute Icon Toggle:
+
+Create a class .ctrl-btn.is-muted .icon.
+
+Use a CSS ::after pseudo-element on .is-muted to draw a thick red diagonal line (#E63946) across the button when active.
+
+=== 3. JS INTERACTION ===
+
+In the bottom IIFE, add a click listener for the new mute button:
+
+JavaScript
+$("muteBtn").addEventListener("click", () => {
+  S.sound = !S.sound; 
+  $("muteBtn").classList.toggle("is-muted", !S.sound);
+  render(); // Sync with existing state
+});
+Ensure the existing UI.infoBtn reference in the script is updated to match the new .ctrl-btn class if necessary, but keep the ID infoBtn so the modal logic doesn't break.
+
+=== CONSTRAINTS ===
+
+Do not change any game math, reel logic, or the paytable layout.
+
+Use only the provided hex codes for the "muted" slash.
+
+Maintain the 100vh non-scrollable requirement.
+
+When done, provide a 3-bullet diff: (a) where the buttons are now located, (b) how the mute state is visually represented, (c) confirmation that the Info Modal still opens.
+
+## Prompt 11:
+Goal: Fix Mute Logic and Restore Top-Right Positioning
+
+Diagnosis:
+
+Positioning: v10 moved controls to the top-left, which contradicts the v9 layout. We need them back in the top-right.
+
+Mute Bug: The previous mute toggle only changed a CSS class but didn't update the internal state S.music and S.sound, nor did it trigger the stopMusic() function.
+
+Requirement: Create a "Master Mute" that controls both music and sound effects, and ensure the UI reflects the state of the settings panel.
+
+Create versions/slot-machine-v11.html by copying v9/v10. Apply these specific fixes. NOTHING ELSE.
+
+=== 1. UI RELOCATION (Top-Right) ===
+
+HTML: Create a container <div class="top-ctrl-bar"> and place it at the top of the <body>.
+
+Move both the #infoBtn and a new #muteBtn into this bar.
+
+CSS:
+
+Remove position: fixed from .info-btn (if any).
+
+Style .top-ctrl-bar: position: fixed; top: 22px; right: 18px; z-index: 100; display: flex; gap: 12px;
+
+Ensure .ctrl-btn (shared class for both) uses the same gold-gradient circular style as the original v9 info button (38x38px, gold border, etc.).
+
+=== 2. MASTER MUTE LOGIC (The Core Fix) ===
+
+JavaScript: Replace or add the mute event listener to handle the Internal State:
+
+JavaScript
+$("muteBtn").addEventListener("click", () => {
+  // 1. Toggle both states
+  const newState = !S.sound; 
+  S.sound = newState;
+  S.music = newState;
+
+  // 2. Immediate Audio Action
+  if (!S.music) {
+    stopMusic(); 
+  } else if (S.music && !mTimer) {
+    startMusic();
+  }
+
+  // 3. Update Visuals
+  $("muteBtn").classList.toggle("is-muted", !newState);
+
+  // 4. Sync with Settings Panel
+  render(); 
+});
+Visual State: In CSS, define .ctrl-btn.is-muted .icon to show a red strike-through or change the emoji to 🔇.
+
+=== 3. REFINEMENT ===
+
+Render Function: Ensure render() also updates the #muteBtn class based on S.sound so that if a user changes settings in the bottom panel, the top-right icon stays in sync.
+
+Add to render(): $("muteBtn").classList.toggle("is-muted", !S.sound);
+
+=== CONSTRAINTS ===
+
+Do not move the title or the cabinet.
+
+Do not break the existing infoBtn click-to-open-modal logic.
+
+Ensure the buttons are accessible and don't overlap on mobile (they should stay in the corner).
+
+Provide a 3-bullet summary: (a) confirmed top-right placement, (b) confirmed mute toggles both music/SFX, (c) confirmed settings panel sync.
+
+## Prompt 12:
+Goal: "Grand Cinema" UI Refinement - Remove redundancy and maximize game scale
+
+Diagnosis: The Pay Table and Special Tokens panels occupy significant screen real estate but repeat information already found in the Information Modal. Removing them allows us to expand the core "Cabinet" and "Jackpot" areas, creating a more immersive, "full-screen" casino experience with minimal dead space.
+
+Strategy:
+
+Eliminate the side panels.
+
+Expand the cabinet width to become the dominant visual element.
+
+Reorganize the bottom controls to fill the horizontal space.
+
+Maintain the Top-Right Master Mute/Info bar from v11.
+
+Create versions/slot-machine-v12.html by copying v11. Apply these specific changes. NOTHING ELSE.
+
+=== 1. HTML CLEANUP (Remove Redundancy) ===
+
+Remove the entire <aside class="paytable-panel"> block.
+
+Remove the entire <div class="token-panel"> block inside the .controls area.
+
+Retain the .top-ctrl-bar (Mute + Info) in the top-right as established in v11.
+
+=== 2. LAYOUT EXPANSION (Fill the Space) ===
+
+Main Container:
+
+Increase .main-row max-width to 1100px (or a width that feels "grand").
+
+Center the .main-row but ensure the .cabinet now takes up the majority of the flex/grid space.
+
+Cabinet Scaling:
+
+Increase the .cabinet internal padding.
+
+Make the .reels-wrap slightly wider to feel more substantial.
+
+Controls Re-layout:
+
+Since the token-panel is gone, change .controls from a 3-column grid to a 2-column layout (grid-template-columns: 1.2fr 1fr).
+
+Bet Panel: Expand it to fill the left side. Make the #betInput and buttons slightly larger to match the new scale.
+
+Spin Column: Place it on the right side. Ensure the Spin Button remains large and prominent.
+
+Jackpot Bar:
+
+At wide viewports (≥1040px), keep the vertical stack on the right, but increase its width to 220px so it feels balanced against the larger cabinet.
+
+=== 3. VISUAL POLISH (Reduce White Space) ===
+
+Background & Glow:
+
+Intensify the background radial gradients (.bg-glow-left/right) to "hug" the larger cabinet, making the edges of the screen feel less empty.
+
+Typography:
+
+Slightly increase the font sizes for .bal-value and .jp-tier-val to utilize the extra room in the plaques.
+
+=== CONSTRAINTS ===
+
+JS Logic: Do NOT remove the token state/logic in JavaScript (players still earn/use tokens, they just don't see the side panel—the modal still explains them). Keep all ID references intact.
+
+Non-Scrollable: The page must remain 100vh and overflow: hidden.
+
+Top-Right Bar: Ensure the Mute and Info buttons remain functional in the top-right corner.
+
+Provide a 3-bullet summary: (a) confirmed removal of redundant panels, (b) explained how the 2-column control layout fills the space, (c) confirmed the new cabinet scaling.
+
+## Prompt 13:
+Goal: Emergency logic fix and UI expansion (v12 Corrected)
+
+Diagnosis: Removing the paytable and token-panel HTML caused the JavaScript render() function and UI object initialization to crash because they are referencing null elements (e.g., UI.tokLuck, UI.tcLuck).
+
+Fix:
+
+Remove the redundant HTML as requested.
+
+Update the JavaScript UI object and render() function to include "null checks" so the script doesn't break when it can't find the side panels.
+
+Ensure the spin() function still works independently of the UI display.
+
+Create versions/slot-machine-v12.html by copying v11. Apply these changes. NOTHING ELSE.
+
+=== 1. HTML & CSS (The New Look) ===
+
+Delete the <aside class="paytable-panel"> and the <div class="token-panel">.
+
+Expand the Cabinet:
+
+Set .main-row { max-width: 1120px; }.
+
+Change .controls to grid-template-columns: 1fr 1fr; (removing the 3rd column).
+
+Mute/Info Bar: Ensure the #infoBtn and #muteBtn are in the top-right as per v11.
+
+=== 2. JAVASCRIPT LOGIC REPAIR (Crucial) ===
+
+UI Object Initialization:
+Modify the UI object and any code that selects the tokens or paytable. Use optional chaining or check if the element exists before assigning.
+Example: Replace tokLuck: $("tokLuck") with tokLuck: $("tokLuck") || null.
+
+The render() Function Fix:
+Wrap all token-related UI updates in an if block so they don't throw errors:
+
+JavaScript
+// Inside render()
+const tokEl = $("tokLuck");
+if (tokEl) {
+  // ... only update if the element exists on the page
+  [{key:"luck", el:UI.tokLuck, cnt:UI.tcLuck}, ...].forEach(...)
+}
+Mute Logic: Ensure S.sound and S.music are toggled correctly and render() is called without crashing.
+
+=== 3. VERIFICATION ===
+
+Spin Function: Ensure UI.spinBtn.disabled = dis; still functions.
+
+Keyboard: Ensure Space key still triggers spin().
+
+=== CONSTRAINTS ===
+
+Do NOT delete the S.tokens state from the S object (the logic must remain, even if hidden).
+
+Do NOT use external images.
+
+Ensure the page remains non-scrollable (100vh).
+
+Provide a 2-bullet diff: (a) How you prevented the "Null Pointer" crash in JS, (b) Confirming the spin button is now responsive.
