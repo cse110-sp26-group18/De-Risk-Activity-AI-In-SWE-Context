@@ -1306,3 +1306,65 @@ Ensure the page remains non-scrollable (100vh).
 
 Provide a 2-bullet diff: (a) How you have changed the HTML, (b) How you have made sure that the elements remain the same on the reels either if the display changes or we press spin
 
+
+## Prompt 14
+Using the slot-machine-v13.html as the base use the rest of this prompt as the refinement for it and make a new html file called slot-machine-v14.html. 
+Goal: Fixing multiple different UI issues
+
+Diagnosis: There are many differnet issues with the simple UI issues. The fixing of borders and the fixing of the bet panel to not change with the numbers. The also fixing of the UI as the sizing changes to phones. Also at times after a spin the board will reset itself instead of keeping the old items.
+
+Fix:
+
+Make the bet-panel more dynamic so that it will change with the sizing of the bet panel will shrink as it becomes a phone. Also making the heights of things so that when it goes a to phone then it can stay on one screen. 
+
+== 1. HTML Fixing == 
+
+On the <div class="cabinet"> Make the border-image also have a border-radius that is the same as the border-radius of the item. 
+On the <div class="bet-panel"> make bet panel width shrink as it goes the sizing of phones. So keep it the same as the width as the <div class="balance-bar"> and changing the bet buttons to fit the width. Also make sure that the spin button on the phone width center of the phone.
+
+On the <div class = "jackpot-bar"> the width of the items change as the numbers increase so make sure that the width of the entire element changes so that the boxes don't go over the border. 
+
+Also for the height of each item make sure that it is shorten so that it still works that there is no scrolling
+
+== 2.  Addition/fixing of the slots==
+On the divs with reel as their class whenever there is a spin at times the items that are displayed on the reels are changed so make sure that the items that are displayed on the reels remains the same as the ending of the previous spin. 
+Also the spin speed of these reels should be increased and then slowed down on the last reel to create a more intense effect. 
+Also when the display changes sizes the items on the reel either disapper or get moved around, so when the display in changing size make sure that the elements on the reel are kepts the same and don't move around. 
+
+== CONSTRAINTS ===
+
+Do NOT delete the S.tokens state from the S object (the logic must remain, even if hidden).
+
+Do NOT use external images.
+
+Ensure the page remains non-scrollable (100vh).
+
+Provide a 2-bullet diff: (a) How you have changed the HTML, (b) How you have made sure that the elements remain the same on the reels either if the display changes or we press spin
+
+## Prompt 15
+Using the slot-machine-v14.html as the base use the rest of this prompt as the refinement for it and make a new html file called slot-machine-v15.html. 
+Goal: To fix the information and mute button placement as the screen shrinks to a phone size. To also create the effect of a bigger win whenever there is even a small win. And also to fix the reel spin speed.
+
+Fix:
+
+== 1. Mute Button ==
+1. For the mute Button and the info-Btn elements when the screen size shrinks to that of a phone the header of the slot machine and these two buttons start to overlap. What you need to do is when the slot machine header can't be shrinked anymore add the width of that element and the two button's width. When those widths are greater than the phone screen turn off the visibility on the two buttons and create them on the bottom in the div called settings-row
+
+== 2. The effects of winning ==
+On even small wins the only win effect is a small brightness of the slot machine instead change the win effect to have more going on. So add coins shooting out from the side or raining down and the have the laterns in the top shake side to side. Have the sound effect also change to either cheering or celebratory sounds.
+
+== 3. Reel spin speed ==
+The reel spin speed is either too fast now or is not working correct. The speed at which you have it now as is too fast making the slots seem like they are just changing their symbols and not actually spinning. So instead either add a blur effect to make the spins look more realistic as if it's spinning so fast the user can't see it or make them slow down to return to actual spin look. 
+
+== 4. Competitive icon ==
+Add another button next to the info and mute button in the excat same look. When clicked on it will open as the same way the info button opens into a page now with a leaderboard for now with fake people and their total winnings. Add the user on their with a random name and a fun avatar with that on the left side and then having their total winning on the right side. 
+
+== CONSTRAINTS ===
+
+Do NOT change anything about any of the math logic about the scoring or anything with what the actual reels do just how they look
+
+Do NOT use external images.
+
+Ensure the page remains non-scrollable (100vh).
+
+Provide a 2-bullet diff: (a) How you have made sure the mute and info button work now on smaller screens, (b) How you have added features to make the effects of a win bigger (c) How you have fixed the reel spin speed issue (d) How you have added the competitive icon and features of that on to the page
