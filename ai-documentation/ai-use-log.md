@@ -1270,3 +1270,39 @@ Do NOT use external images.
 Ensure the page remains non-scrollable (100vh).
 
 Provide a 2-bullet diff: (a) How you prevented the "Null Pointer" crash in JS, (b) Confirming the spin button is now responsive.
+
+
+## Prompt 14
+Using the slot-machine-v13.html as the base use the rest of this prompt as the refinement for it and make a new html file called slot-machine-v14.html. 
+Goal: Fixing multiple different UI issues
+
+Diagnosis: There are many differnet issues with the simple UI issues. The fixing of borders and the fixing of the bet panel to not change with the numbers. The also fixing of the UI as the sizing changes to phones. Also at times after a spin the board will reset itself instead of keeping the old items.
+
+Fix:
+
+Make the bet-panel more dynamic so that it will change with the sizing of the bet panel will shrink as it becomes a phone. Also making the heights of things so that when it goes a to phone then it can stay on one screen. 
+
+== 1. HTML Fixing == 
+
+On the <div class="cabinet"> Make the border-image also have a border-radius that is the same as the border-radius of the item. 
+On the <div class="bet-panel"> make bet panel width shrink as it goes the sizing of phones. So keep it the same as the width as the <div class="balance-bar"> and changing the bet buttons to fit the width. Also make sure that the spin button on the phone width center of the phone.
+
+On the <div class = "jackpot-bar"> the width of the items change as the numbers increase so make sure that the width of the entire element changes so that the boxes don't go over the border. 
+
+Also for the height of each item make sure that it is shorten so that it still works that there is no scrolling
+
+== 2.  Addition/fixing of the slots==
+On the divs with reel as their class whenever there is a spin at times the items that are displayed on the reels are changed so make sure that the items that are displayed on the reels remains the same as the ending of the previous spin. 
+Also the spin speed of these reels should be increased and then slowed down on the last reel to create a more intense effect. 
+Also when the display changes sizes the items on the reel either disapper or get moved around, so when the display in changing size make sure that the elements on the reel are kepts the same and don't move around. 
+
+== CONSTRAINTS ===
+
+Do NOT delete the S.tokens state from the S object (the logic must remain, even if hidden).
+
+Do NOT use external images.
+
+Ensure the page remains non-scrollable (100vh).
+
+Provide a 2-bullet diff: (a) How you have changed the HTML, (b) How you have made sure that the elements remain the same on the reels either if the display changes or we press spin
+
