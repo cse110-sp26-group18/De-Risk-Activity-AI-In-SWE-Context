@@ -33,3 +33,6 @@ Noticed that the last slot slows down in terms of speed--plays into the player m
 
 ### Anvay
 Proposed the idea of including multipliers (maybe based on periodic intervals) that offer multiples of the rewards, special tokens which increase probability of wins (can be bought with regular tokens), and free spins to offer if a player is on a losing streak.
+
+### Daniel 
+Added research about how some slot machines add little wins to make you feel like you are winning when you are actually losing money. For example if you bet 1 dollar, but you only win back 30 seconds. Also added research how the sound effects and sounds play an important role in increasing heart rate during wins and affect how one views the slot machine. Finally proposed the idea to potentially have multiple bets going on at the same time.
