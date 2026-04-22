@@ -1451,3 +1451,48 @@ Return a 4-bullet diff:
 2. Reel stability fixes
 3. Multiplier implementation
 4. Auto-spin loss softening implementation
+
+## Prompt 18
+
+**Goal: consolidate bottom toggles into a top-right settings popover, trim visual noise, expand the reels, and make the spin button + spin animation feel premium**
+- Bottom settings-row was eating vertical space for something users only touch rarely. Moving Music/Sound/Stop-on-Big-Win into a gear popover up top frees that strip and keeps related system controls clustered.
+- Reels felt small relative to the frame; bumping --symbol-h and shrinking the jackpot-bar directly trades "empty gold frame" for "more visible slot surface."
+- v17's spin blur (3.5px) was making emojis look pixelated during spin, per user. Reduced blur + GPU compositing hints + expo-out easing + slightly longer stop durations make the motion smoother without losing snap.
+
+Using slot-machine-v17.html as the base, create slot-machine-v18.html with the targeted changes below. Do not rewrite the file.
+
+=== 1. CONSOLIDATE SETTINGS INTO TOP-RIGHT ===
+- Remove the three toggle-wraps (Music / Sound / Stop on Big Win) from the bottom .settings-row.
+- Add a new ⚙ gear button as the last item inside .top-ctrl-bar.
+- Clicking the gear opens a .settings-popover beneath it containing the same three toggles. IDs (tgMusic, tgSound, tgStop) must stay the same so existing event handlers don't change.
+- Clicking outside the popover or pressing Escape closes it. aria-expanded / aria-hidden reflect state.
+- Hide the now-empty .settings-row entirely on desktop; keep the existing mobile media query that shows it with compact ctrl buttons below 600px.
+
+=== 2. REMOVE DENO STRIP ===
+- Delete the "× 0.02 PER SPIN · 3 LINES ACTIVE · RTP 96.2%" strip inside the cabinet.
+
+=== 3. EXPAND SLOTS, SHRINK JACKPOT ===
+- --symbol-h: 88px → 104px. SYM_H JS const derives from this CSS var via getSymH() so no JS change needed.
+- main-row jackpot-bar: width 220px → 150px. jp-tier padding tightened. jp-tier-label and jp-tier-val fonts clamped smaller so numbers fit the narrower column.
+
+=== 4. COOLER SPIN BUTTON ===
+- Bump size 100 → 108px, glyph 52 → 56px.
+- Add a rotating conic-gradient aura ring via ::before (blurred, behind button).
+- Add an idle "breathing" box-shadow pulse (2.6s alternate).
+- Add a click flash via ::after radial gradient (opacity 0 → 1 on :active).
+- Hover tilts bigger and intensifies aura blur / glow.
+- Disabled (spinning) state keeps the existing 0.7s rotation but suppresses the breathing pulse.
+
+=== 5. SMOOTHER SPIN + CLEARER EMOJIS ===
+- .reel-spinning blur: 3.5px → 1.6px. .reel-spinning-slow blur: 1.5px → 0.6px.
+- Add transform:translateZ(0) and will-change hints to force GPU compositing.
+- stopReel easing curve: cubic-bezier(0.13,0.85,0.22,1.0) → cubic-bezier(0.16,1,0.3,1) (expo out).
+- Phase-2 stop durations: 260/290/320/350 → 360/400/440/480 so the new curve has room.
+
+=== CONSTRAINTS ===
+- Do NOT rename any JS-facing DOM ids.
+- Do NOT touch game math, evaluate(), or the multiplier / auto-loss logic added in v17.
+- Keep the mobile settings-row (with compact ctrl buttons) working below 600px.
+- Stay non-scrollable (100vh overflow hidden).
+
+Return a 5-bullet diff: (a) where the toggles live now, (b) reel expansion + jackpot shrink, (c) spin button upgrades, (d) blur + easing changes, (e) anything skipped.
