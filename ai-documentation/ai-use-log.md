@@ -1496,3 +1496,57 @@ Using slot-machine-v17.html as the base, create slot-machine-v18.html with the t
 - Stay non-scrollable (100vh overflow hidden).
 
 Return a 5-bullet diff: (a) where the toggles live now, (b) reel expansion + jackpot shrink, (c) spin button upgrades, (d) blur + easing changes, (e) anything skipped.
+
+## Prompt 19
+
+**Goal: make each reel feel like a real paper strip (no duplicate symbols stacked in the same visible column), and revert v18's spin animation changes back to v8's feel**
+- v17/v18 strip generation picks each of the 3 visible cells independently, so the same reel can show "bell / bell / lemon." On real cabinets the visible column always reads as three distinct items because the strip is a roll where adjacent cells differ. Fixing this is a small change inside rollGrid — enforce uniqueness per column — without touching evaluate(), which only cares about horizontal matches.
+- Also deferring to the user's judgement that v8's spin animation (natural overshoot easing, longer stop durations, no filter blur) feels better than v18's (expo-out, reduced blur, compositing hints). Regress cleanly: delete the v17/v18 flicker-blur system, restore v8's stopReel timing and cubic-bezier.
+- Added a polish note: the 14 lead-up cells that placeOnStrip seeds before the landing triple also shouldn't produce adjacent duplicates (one re-roll, don't loop forever).
+
+Using slot-machine-v18.html as the base, create slot-machine-v19.html with the two focused changes below. Do not rewrite the file.
+
+=== 1. UNIQUE SYMBOLS PER VISIBLE COLUMN ===
+
+Goal: each of the 5 reels shows 3 distinct symbols top-to-bottom during any spin result — no "two bells stacked" on the same reel. Feels like a real paper strip rolling past.
+
+Where to change:
+- rollGrid(tok) in the JS. Currently picks grid[0][c], grid[1][c], grid[2][c] independently, so collisions happen.
+- Change the per-column logic to draw three DISTINCT symbols:
+  1. Pick `mid` the same way as today (respects jackpot/luck tokens).
+  2. Pick `top` from the weighted POOL but re-roll if `top.id === mid.id`.
+  3. Pick `bot` from POOL but re-roll if `bot.id === mid.id || bot.id === top.id`.
+- Cap re-rolls at ~8 attempts to avoid pathological loops, then fall back to the first non-colliding SYMBOLS entry.
+- Luck / jackpot forced-line overrides on the MIDDLE row must still win. After a token forces the middle row, re-apply the exclusion on top and bot so they differ from whatever the middle ended up being.
+- Keep evaluate() untouched — matches are still horizontal across reels.
+
+Additional polish: in placeOnStrip(ri, top, mid, bot), the 14 lead-up cells placed before the landing triple are currently filled with rndSym() and can produce same-symbol runs during the spin. Change that loop to avoid placing a symbol identical to the cell immediately above it — re-roll once if it matches. Do not over-engineer; one re-roll is enough.
+
+=== 2. REGRESS TO V8 SPIN ANIMATION ===
+
+CSS reverts:
+- Delete the .reel-spinning .strip / .reel-spinning-slow .strip blur rules and the "no-spinning" filter transition block.
+- Remove the translateZ(0) / will-change hints that v18 added to those strip states.
+
+JS reverts inside spin():
+- Remove the stopFlicker / startFlicker calls that toggle .reel-spinning / .reel-spinning-slow classes. If those functions are only used here, delete them entirely.
+- Phase-2 stop durations back to v8's:
+    await stopReel(0, landings[0], 500); await wait(160);
+    await stopReel(1, landings[1], 580); await wait(160);
+    await stopReel(2, landings[2], 640); await wait(160);
+    await stopReel(3, landings[3], 700);
+- Phase-3 suspense pause back to 450ms (from 900ms). Final reel stopReel(4, landings[4], 1500) unchanged.
+- Initial pre-stop wait back to 500ms.
+
+stopReel() easing:
+- transition cubic-bezier back to (0.13, 0.85, 0.22, 1.0) from v8.
+
+Keep v17's other behaviors intact: S.spinCount multiplier logic, S.autoLossStreak softening, S.lastGrid caching, currentLanding resize reapply. These are orthogonal to the blur/flicker system.
+
+=== CONSTRAINTS ===
+- Do NOT change evaluate(), token logic, scoring math, or the multiplier/auto-loss features added in v17.
+- Do NOT change DOM ids or CSS variable architecture.
+- Do NOT re-introduce the deno-strip or move the settings back to the bottom; keep the v18 layout.
+- Stay non-scrollable (100vh + overflow hidden).
+
+Return a 3-bullet diff: (a) exactly where in rollGrid you enforce per-column uniqueness and how tokens are handled, (b) which CSS blocks were deleted and which JS calls were removed, (c) any edge case awareness.
