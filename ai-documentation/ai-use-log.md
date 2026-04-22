@@ -1662,3 +1662,70 @@ Keep the existing tickIv interval sound (90ms from v20). No changes to stopReel(
 - Mobile (<600px): the --symbol-h clamp's lower bound (88px) must hold.
 
 Return a 3-bullet diff: (a) how the two-phase spin is structured and the total duration, (b) how the cabinet fills vertical space, (c) what the controls row looks like at the new scale.
+
+## Prompt 22
+
+**Goal: fix the reel-cells-don't-fill-cabinet regression from v21 and revert the spin animation to v8/v19's single-motion feel while keeping parallel execution**
+- v21 diagnosis: `.reel` still has `height: calc(3 * var(--symbol-h))` where --symbol-h is clamp(88px,12vh,130px) = max 130px. Reel cells locked to ~390px while the surrounding `.reels-wrap` flex-grows to fill the cabinet. Need to let `.reel` stretch vertically and derive --symbol-h from the actual reel height via JS.
+- Animation diagnosis: v21's two-phase (linear scroll → decel stop) stitches together two different motions, which reads as jerky. User explicitly asked for v8/v19's feel (single smooth transition with v8's ease-out curve) but executed in parallel. Dropping phase 1 and wrapping the single v19-style stopReel calls in Promise.all gets there.
+
+Using slot-machine-v21.html as the base, create slot-machine-v22.html with two fixes. Do not rewrite the file.
+
+=== 1. REELS MUST FILL THE ENTIRE CABINET ===
+
+Bug: v21's .cabinet and .reels-wrap grow vertically via flex, but .reel cells stay at `calc(3 * var(--symbol-h))` (clamped to 130px). Reel cells take the top ~390px; empty black fills the rest.
+
+Fix:
+- .reel CSS: remove the fixed `height: calc(3 * var(--symbol-h))`. Add `min-height: 0` so it plays nicely with the flex parent. align-self defaults to stretch, which gives it full vertical fill.
+- Add a JS fitReelsToCabinet() helper that runs on load + resize and derives --symbol-h from reel.clientHeight / 3:
+
+    function fitReelsToCabinet(){
+      const el=UI.reelEls[0];
+      if(!el)return;
+      const h=el.clientHeight;
+      if(h<=0)return;
+      const newSymH=Math.max(70,Math.floor(h/3));
+      document.documentElement.style.setProperty("--symbol-h",newSymH+"px");
+      SYM_H=newSymH;
+      for(let r=0;r<REEL_N;r++){
+        if(!UI.strips[r])continue;
+        UI.strips[r].style.transition="none";
+        UI.strips[r].style.transform=`translateY(${-(currentLanding[r]||1)*SYM_H}px)`;
+      }
+      void(UI.strips[0]&&UI.strips[0].offsetHeight);
+    }
+    window.addEventListener("resize",fitReelsToCabinet);
+    requestAnimationFrame(fitReelsToCabinet);
+
+- Payline-mid's `top: calc(12px + var(--symbol-h))` continues to work since --symbol-h is reactive.
+- Keep the clamp on --symbol-h in :root as a fallback for the initial paint before fitReelsToCabinet runs.
+
+=== 2. ANIMATION: V8/V19 FEEL, PARALLEL EXECUTION ===
+
+v21's two-phase spin (linear scroll + decel stop) feels jerky. Revert to v19's single-transition approach but run all 5 reels simultaneously.
+
+Inside spin(), REPLACE the entire PHASE1 block + Promise.all block with:
+
+    let tickIv=null;
+    if(S.sound)tickIv=setInterval(tick,110);
+
+    await wait(400); // brief pre-spin pause
+
+    // All 5 reels animate in parallel with v8/v19's curve + durations.
+    // Staggered durations = natural left-to-right stop.
+    const stopDurations=[700,900,1100,1300,2000];
+    await Promise.all(UI.strips.map((strip,ri)=>
+      stopReel(ri,landings[ri],stopDurations[ri])
+    ));
+
+    if(tickIv)clearInterval(tickIv);
+
+Remove the PHASE1_MS / PHASE1_CELLS block entirely. stopReel() stays unchanged (still uses v19's cubic-bezier(0.13, 0.85, 0.22, 1.0)).
+
+=== CONSTRAINTS ===
+- No game-logic changes. No DOM id renames.
+- No changes to evaluate, rollGrid, placeOnStrip, multiplier logic, or auto-loss softening.
+- Stay non-scrollable.
+- Mobile: Math.max(70, ...) floor on --symbol-h prevents cells from collapsing to unreadable sizes.
+
+Return a 3-bullet diff: (a) how reels now fill cabinet vertically, (b) the spin timing breakdown, (c) anything you skipped.

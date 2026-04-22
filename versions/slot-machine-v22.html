@@ -1,0 +1,3979 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="imperial">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SPINFIRE CASINO — Free Slots (v22)</title>
+<!-- Google Fonts: Cinzel Decorative for headings, Cinzel for labels, Nunito for body text -->
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cinzel+Decorative:wght@700;900&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet"/>
+<style>
+/* ============================================
+   SPINFIRE CASINO — v22
+
+   CHANGELOG FROM v21:
+   - Reels now fill the entire cabinet. v21's .reel was locked to
+     calc(3 * var(--symbol-h)) ≈ 390px max while the cabinet grew
+     to fill the viewport, leaving empty space below. v22 removes
+     the fixed height on .reel (lets it stretch via flex) and adds
+     a JS fitReelsToCabinet() helper that computes --symbol-h =
+     reel.clientHeight / 3 on load + resize.
+   - Spin animation reverted to v19's single-transition feel
+     (cubic-bezier 0.13, 0.85, 0.22, 1.0 in stopReel) but executed
+     in parallel via Promise.all with staggered durations
+     [700, 900, 1100, 1300, 2000] ms. Dropped v21's linear
+     phase-1 scroll. Brief 400ms pre-spin pause. Total spin ~2s.
+
+   (original v21 changelog below)
+   SPINFIRE CASINO — v21
+
+   CHANGELOG FROM v20:
+   - Two-phase spin: 1200ms linear constant-speed scroll (all reels
+     together, 10 cells of visible motion) followed by staggered
+     decelerating stops [800, 1000, 1200, 1400, 1900] ms for natural
+     left-to-right landing. Total spin ~3.1s. Fixes v20's "spin too
+     fast / finishes in 0.3s" feel — v8's easing curve was front-
+     loading 85% of motion into 22% of duration.
+   - --symbol-h clamped to viewport height: clamp(88px, 12vh, 130px).
+     Reels now grow with the cabinet instead of sitting at a fixed
+     height.
+   - Cabinet + .main-row + .reels-wrap use flex:1 to fill vertical
+     space between header and footer. Cabinet claims ~2/3 of viewport.
+   - Jackpot bar uses align-self: stretch + grid-template-rows
+     repeat(4, 1fr) so its 4 tiers distribute evenly alongside the
+     taller cabinet.
+   - Controls scaled up: spin button 108→140px (glyph 56→72px),
+     adj-btn 32→42px, bet input font 22→26px, balance plaques +40%
+     vertical padding. controls align-items stretch.
+   - Cabinet padding 12→14px, deeper outer shadow.
+
+   (original v20 changelog below)
+   SPINFIRE CASINO — v20
+
+   CHANGELOG FROM v19:
+   - Spin button no longer rotates when disabled for refill
+     countdown or insufficient balance. Rotation now bound to a
+     new .is-spinning class, toggled in render() from S.spinning.
+     Disabled state renders at opacity 0.55 with no animation.
+   - Jackpot tiers (wide viewport) stack label above value instead
+     of side-by-side. Fixes "50,100" / "8,888" truncation.
+   - Spin rewritten: all 5 reels animate simultaneously via
+     Promise.all on stopReel calls with staggered durations
+     [1100, 1300, 1500, 1700, 2200] ms. Natural left-to-right stop,
+     total spin ~2.2s. Initial pre-stop wait 500→150ms, tick
+     interval 110→90ms. Removed the separate "Here it comes..."
+     suspense phase (last reel's longer duration handles it).
+
+   (original v19 changelog below)
+   SPINFIRE CASINO — v19
+
+   CHANGELOG FROM v18:
+   - rollGrid now enforces per-column uniqueness: each reel's 3
+     visible cells are guaranteed distinct symbols (the "paper roll"
+     feel). Token-forced middle rows are respected; top/bot are
+     reconciled after overrides.
+   - placeOnStrip lead-up fill avoids adjacent-duplicate symbols
+     (one re-roll per cell, not an infinite loop).
+   - Spin animation reverted to v8 behavior: removed reel-spinning /
+     reel-spinning-slow blur classes and the startFlicker /
+     stopFlicker helpers entirely. Stop durations back to 500 / 580 /
+     640 / 700 ms (phase 2), 450 ms suspense pause (phase 3), 1500 ms
+     final reel. Easing back to cubic-bezier(0.13,0.85,0.22,1.0).
+   - v17's multiplier and auto-loss softening left intact.
+
+   (original v18 changelog below)
+   SPINFIRE CASINO — v18
+
+   CHANGELOG FROM v17:
+   - Toggles (Music/Sound/Stop on Big Win) moved from bottom settings-row
+     into a new ⚙ popover in the top-right ctrl bar.
+   - Removed the "× 0.02 PER SPIN · 3 LINES · RTP" deno-strip.
+   - --symbol-h bumped 88 → 104 to enlarge the reel area.
+   - Jackpot-bar shrunk 220 → 150 with smaller tier labels and values.
+   - Spin button reworked: rotating conic-gradient aura ring, idle
+     breathing pulse, click flash via ::after, larger (108px) with
+     56px glyph, suppressed breathe pulse during spinPulse rotation.
+   - Spin animation: blur during spin reduced (3.5→1.6 / 1.5→0.6) for
+     clearer emojis, GPU compositing hints added, easing curve changed
+     to expo-out cubic-bezier(0.16,1,0.3,1), stop durations bumped
+     360/400/440/480ms so the smoother curve has room to resolve.
+
+   (original v17 changelog below)
+   SPINFIRE CASINO — v17
+
+   CHANGELOG FROM v16:
+   A. LAYOUT/OVERFLOW FIXES (desktop + mobile):
+      - Cabinet hardened against horizontal overflow at any viewport
+        (defensive box-sizing, max-width, overflow control). Border-image
+        outset and box-shadow no longer cause horizontal scroll.
+      - Jackpot tier cells: min-width:0 + ellipsis enforced on cell so
+        long values truncate instead of expanding the bar.
+      - <=480px: bet-panel matches balance-bar width exactly; bet adjust
+        buttons shrink/wrap (no overflow); spin button horizontally
+        centered; vertical compaction so 375px/414px screens fit 100vh.
+   B. REEL STABILITY:
+      - S.lastGrid caches the final reel state after each spin.
+      - applyLastGrid() re-applies the cached symbols on window resize
+        and on theme switch — no shifting, no emoji fallback, height
+        always follows --symbol-h.
+   C. PERIODIC SPIN MULTIPLIER:
+      - S.spinCount tracks total spins.
+      - Every 10th spin: multiplier cycles 2x → 3x → 5x → repeat.
+      - Animated "Nx MULTIPLIER SPIN!" banner shown above reels before
+        reels start spinning.
+      - Multiplier badge displayed on spin button during the spin.
+      - Multiplier applied to payout AFTER evaluate() returns (evaluate
+        itself is unchanged).
+   D. AUTO-SPIN LOSS SOFTENING:
+      - S.autoLossStreak tracks consecutive losses while auto-spin on.
+      - 3 losses: 1-spin pause with "Hang in there..." overlay, then
+        auto-spin resumes.
+      - 5 losses: cabinet dimmed to 85% brightness; balance display
+        slow-pulses for attention.
+      - All effects clear immediately on next win or auto-spin off.
+
+   CONSTRAINTS OBSERVED:
+   - S.tokens preserved.
+   - evaluate() unchanged (multiplier applied externally).
+   - Scoring math, reel logic, CSS variable/theme architecture
+     preserved.
+   - No external images.
+   - Page remains 100vh, non-scrollable on supported viewports.
+   ============================================ */
+
+/* ── ROOT CSS CUSTOM PROPERTIES ─────────────────────────────────
+   These variables define the entire color palette for the casino UI.
+   Every visual element references these, so overriding them in a
+   [data-theme] block re-skins the entire interface.
+
+   NAMING CONVENTION:
+   --gold-*        Primary accent family (highlights, borders, text accents)
+   --red-*         Secondary/background family (panels, deep shades)
+   --black-lacquer Darkest panel color
+   --bg-deepest    Absolute darkest (input fields, deepest recesses)
+   --cream-*       Light reel-face colors
+   --text-*        Typography colors
+   --panel-*       Card/panel UI surfaces
+   --reel-fade     Semi-transparent top/bottom fade on reel faces
+   --symbol-h      Pixel height of each symbol cell in the reel strip
+
+   TO ADD A NEW THEME: Copy any [data-theme] block, rename it,
+   adjust the color values, and add an entry to the THEMES object
+   in the JS section.
+   ─────────────────────────────────────────────────────────────── */
+:root {
+  /* Primary gold accent colors — borders, highlights, text accents */
+  --gold:#FFD700;              /* Base gold */
+  --gold-bright:#FFF4B0;       /* Brightest gold — inner glows, active states */
+  --gold-mid:#E6B800;          /* Mid-tone gold — secondary accents */
+  --gold-deep:#C9A227;         /* Muted gold — borders, separators, subtle trim */
+  --gold-shadow:#7A5C00;       /* Darkest gold — shadows, depth, outer rings */
+
+  /* Red / imperial color family — backgrounds, deep accents */
+  --red-imperial:#C8102E;      /* Vivid red — marquee bulbs, accent pops */
+  --red-bright:#E63946;        /* Bright red — buttons, alerts, active indicators */
+  --red-deep:#8B0000;          /* Dark red — button gradients, heavy borders */
+  --red-lacquer:#450000;       /* Very dark red — cabinet/panel backgrounds */
+  --red-dark:#2B0000;          /* Deep dark red — secondary panel backgrounds */
+
+  /* Neutral / background colors */
+  --black-lacquer:#1A0000;     /* Near-black with red tint — darkest UI panels */
+  --bg-deepest:#0A0000;        /* Absolute darkest — input fields, deep recesses */
+  --cream:#FFF4D6;             /* Light cream — reel face background (light stop) */
+  --cream-deep:#F3E4B0;        /* Deeper cream — reel face background (dark stop) */
+
+  /* Typography */
+  --text-main:#FFF4D6;         /* Primary text — high contrast on dark backgrounds */
+  --text-sub:rgba(255,240,200,0.7); /* Secondary/muted text */
+
+  /* Panel / card surfaces */
+  --panel-bg:rgba(20,0,0,0.88);   /* Semi-transparent panel overlay */
+  --panel-border:#C9A227;          /* Default panel border (= gold-deep) */
+
+  /* Reel-specific */
+  --reel-fade:rgba(255,244,214,0.97); /* Top/bottom gradient fade on reel columns */
+
+  /* Layout measurement — controls symbol cell height in reels.
+     v18: bumped 88 → 104 to expand the reel area. SYM_H JS const must match.
+     v21: clamped off viewport height so the cabinet grows to fill ~2/3
+     of the screen without introducing vertical overflow. SYM_H reads
+     this value on each spin via getSymH(), so no JS change needed. */
+  --symbol-h:clamp(88px, 12vh, 130px);
+}
+
+/* ── THEME: ROYAL BLUE ──────────────────────────────────────────
+   Inspired by classic "Reel King" style machines (Reference Image 1).
+   Navy blue backgrounds with gold accents, blue-tinted white reels.
+   Evokes a regal, traditional European casino atmosphere.
+   ────────────────────────────────────────────────────────────── */
+[data-theme="royal-blue"] {
+  --gold:#FFD700; --gold-bright:#FFF4B0; --gold-mid:#E6B800;
+  --gold-deep:#B8860B; --gold-shadow:#7A5C00;
+  --red-imperial:#2E5CB8; --red-bright:#4A7FD4;
+  --red-deep:#1A3A7A; --red-lacquer:#0A1A3A;
+  --red-dark:#0C1E42; --black-lacquer:#060E20;
+  --bg-deepest:#030810;
+  --cream:#EEF2FF; --cream-deep:#D8E2F4;
+  --text-main:#E8F0FF; --text-sub:rgba(200,220,255,0.7);
+  --panel-bg:rgba(10,20,50,0.88); --panel-border:#B8860B;
+  --reel-fade:rgba(238,242,255,0.97);
+}
+
+/* ── THEME: GOLDEN FORTUNE ──────────────────────────────────────
+   Inspired by "88 Fortunes" style machines (Reference Image 2).
+   Opulent black backgrounds with rich gold throughout.
+   A premium VIP feel — all gold, all luxury.
+   ────────────────────────────────────────────────────────────── */
+[data-theme="golden-fortune"] {
+  --gold:#FFD700; --gold-bright:#FFFACD; --gold-mid:#DAA520;
+  --gold-deep:#B8860B; --gold-shadow:#8B6914;
+  --red-imperial:#DAA520; --red-bright:#FFD700;
+  --red-deep:#8B6914; --red-lacquer:#1A1200;
+  --red-dark:#1A1400; --black-lacquer:#0E0A00;
+  --bg-deepest:#050400;
+  --cream:#FFF8DC; --cream-deep:#F5DEB3;
+  --text-main:#FFFACD; --text-sub:rgba(255,250,205,0.7);
+  --panel-bg:rgba(20,16,0,0.88); --panel-border:#DAA520;
+  --reel-fade:rgba(255,248,220,0.97);
+}
+
+/* ── THEME: EMERALD JADE ────────────────────────────────────────
+   Lush jade green theme evoking prosperity and harmony.
+   Green jade accents with gold highlights on deep emerald backgrounds.
+   ────────────────────────────────────────────────────────────── */
+[data-theme="emerald-jade"] {
+  --gold:#50C878; --gold-bright:#98FB98; --gold-mid:#3CB371;
+  --gold-deep:#2E8B57; --gold-shadow:#1A5C35;
+  --red-imperial:#228B22; --red-bright:#32CD32;
+  --red-deep:#006400; --red-lacquer:#0A2010;
+  --red-dark:#0C2812; --black-lacquer:#041208;
+  --bg-deepest:#020A04;
+  --cream:#F0FFF0; --cream-deep:#D8F5D8;
+  --text-main:#E0FFE0; --text-sub:rgba(200,255,200,0.7);
+  --panel-bg:rgba(4,18,8,0.88); --panel-border:#2E8B57;
+  --reel-fade:rgba(240,255,240,0.97);
+}
+
+/* ── THEME: MIDNIGHT PURPLE ─────────────────────────────────────
+   Luxurious purple and lavender theme suggesting mystery
+   and premium exclusivity. Violet tones with silver-purple accents.
+   ────────────────────────────────────────────────────────────── */
+[data-theme="midnight-purple"] {
+  --gold:#C0A0F0; --gold-bright:#E0D0FF; --gold-mid:#9B59B6;
+  --gold-deep:#7D3C98; --gold-shadow:#4A235A;
+  --red-imperial:#9B59B6; --red-bright:#BB8FCE;
+  --red-deep:#6C3483; --red-lacquer:#1A0A2E;
+  --red-dark:#120822; --black-lacquer:#0A0416;
+  --bg-deepest:#050210;
+  --cream:#F5F0FF; --cream-deep:#E0D4F0;
+  --text-main:#EFE0FF; --text-sub:rgba(220,200,255,0.7);
+  --panel-bg:rgba(16,6,30,0.88); --panel-border:#7D3C98;
+  --reel-fade:rgba(245,240,255,0.97);
+}
+
+/* ── THEME: DRAGON FIRE (LOCKED) ────────────────────────────────
+   Intense fire orange and gold, inspired by dragon-themed machines
+   (Reference Image 4). Unlocked by winning 5,000+ credits in a
+   single spin. Aggressive, exciting, high-energy.
+   ────────────────────────────────────────────────────────────── */
+[data-theme="dragon-fire"] {
+  --gold:#FF8C00; --gold-bright:#FFD280; --gold-mid:#FF6B00;
+  --gold-deep:#CC5500; --gold-shadow:#8B3A00;
+  --red-imperial:#FF4500; --red-bright:#FF6347;
+  --red-deep:#B22222; --red-lacquer:#2A0A00;
+  --red-dark:#1E0800; --black-lacquer:#140400;
+  --bg-deepest:#0A0200;
+  --cream:#FFF5E6; --cream-deep:#FFE4C4;
+  --text-main:#FFE8D0; --text-sub:rgba(255,220,180,0.7);
+  --panel-bg:rgba(30,8,0,0.88); --panel-border:#CC5500;
+  --reel-fade:rgba(255,245,230,0.97);
+}
+
+/* ── THEME: DIAMOND FROST (LOCKED) ──────────────────────────────
+   Icy blue and crystal white — a cool, elegant premium theme.
+   Unlocked by hitting the Progressive Jackpot (5 diamonds).
+   Frosty crystalline aesthetics for the ultimate winner.
+   ────────────────────────────────────────────────────────────── */
+[data-theme="diamond-frost"] {
+  --gold:#88D8F0; --gold-bright:#C8EFFF; --gold-mid:#5BC0EB;
+  --gold-deep:#3A9ABF; --gold-shadow:#1A6A8F;
+  --red-imperial:#4FC3F7; --red-bright:#81D4FA;
+  --red-deep:#0277BD; --red-lacquer:#041828;
+  --red-dark:#061E30; --black-lacquer:#020E18;
+  --bg-deepest:#010810;
+  --cream:#F0F8FF; --cream-deep:#D4ECF7;
+  --text-main:#E0F4FF; --text-sub:rgba(200,235,255,0.7);
+  --panel-bg:rgba(4,20,40,0.88); --panel-border:#3A9ABF;
+  --reel-fade:rgba(240,248,255,0.97);
+}
+
+/* ── GLOBAL RESET ───────────────────────────────────────────────
+   Standard box-sizing reset. Every element (including pseudo-elements)
+   uses border-box so padding/border are included in width/height.
+   Margin and padding zeroed for consistent cross-browser baseline.
+   ─────────────────────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+/* ── HTML / BODY BASE ───────────────────────────────────────────
+   - height/max-height: 100vh locks the page to viewport height
+   - overflow: hidden prevents any scrolling
+   - user-select: none prevents text selection during gameplay
+   - font-family: Nunito is the base body font; Cinzel used for headings
+   - background: uses --red-lacquer as the base page color
+   - color: uses --text-main for default text
+   ─────────────────────────────────────────────────────────────── */
+html,body{
+  height:100vh;max-height:100vh;
+  font-family:'Nunito',sans-serif;
+  background:var(--red-lacquer);
+  color:var(--text-main);
+  overflow:hidden;
+  user-select:none;
+}
+
+/* ── BACKGROUND LAYER ───────────────────────────────────────────
+   Fixed full-screen background with three layers:
+   1. .bg-wrap: Radial gradient from red-deep center to black-lacquer edges.
+   2. .bg-stars: SVG pattern overlay creating a subtle geometric motif.
+   3. .bg-glow-left / .bg-glow-right: Animated radial glows for ambiance.
+
+   The background is at z-index:0, behind all UI content.
+   The pulseGlow animation creates a gentle breathing light effect.
+
+   To customize: adjust the radial-gradient stops in .bg-wrap,
+   change the SVG pattern in .bg-stars, or modify glow colors/sizes.
+   ─────────────────────────────────────────────────────────────── */
+.bg-wrap{
+  position:fixed;inset:0;z-index:0;overflow:hidden;
+  background:radial-gradient(ellipse 85% 70% at 50% 40%,var(--red-deep) 0%,var(--red-lacquer) 55%,var(--black-lacquer) 100%);
+}
+.bg-stars{
+  position:absolute;inset:0;opacity:0.9;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'><g fill='none' stroke='%23c9a227' stroke-width='0.9' opacity='0.18'><circle cx='60' cy='60' r='44'/><circle cx='60' cy='60' r='26'/><circle cx='60' cy='60' r='12'/><path d='M60 12 L60 108 M12 60 L108 60 M26 26 L94 94 M94 26 L26 94'/></g></svg>");
+  background-size:120px 120px;
+}
+.bg-glow-left{
+  position:absolute;top:10%;left:-10%;
+  width:45vw;height:45vw;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,215,0,0.14) 0%,transparent 70%);
+  animation:pulseGlow 5s ease-in-out infinite alternate;
+}
+.bg-glow-right{
+  position:absolute;top:15%;right:-10%;
+  width:50vw;height:50vw;border-radius:50%;
+  background:radial-gradient(circle,rgba(200,16,46,0.22) 0%,transparent 65%);
+  animation:pulseGlow 7s ease-in-out infinite alternate-reverse;
+}
+/* pulseGlow: gentle opacity breathing for background glow orbs */
+@keyframes pulseGlow{from{opacity:0.55;}to{opacity:1;}}
+
+/* ── MARQUEE LIGHT STRIPS ───────────────────────────────────────
+   Top and bottom light strips simulating casino marquee bulbs.
+   - Fixed position at top:0 and bottom:0 of the viewport.
+   - Each bulb is a 14px circle that alternates between gold and
+     red via the bulbSeq keyframe animation.
+   - nth-child offsets stagger the animation for a chase-light effect.
+   - Background gradient: black-lacquer → red-dark for depth.
+   - Border: gold-deep separates marquee from content.
+
+   To customize: change bulb size (.marquee-bulb width/height),
+   animation colors in @keyframes bulbSeq, or speed (1.4s).
+   ─────────────────────────────────────────────────────────────── */
+.marquee-top,.marquee-bottom{
+  position:fixed;left:0;right:0;z-index:5;height:14px;
+  display:flex;align-items:center;gap:0;
+  background:linear-gradient(180deg,var(--black-lacquer),var(--red-dark));
+  border-bottom:2px solid var(--gold-deep);
+  overflow:hidden;
+}
+.marquee-top{top:0;}
+.marquee-bottom{bottom:0;border-bottom:none;border-top:2px solid var(--gold-deep);}
+.marquee-bulb{
+  width:14px;height:14px;flex-shrink:0;border-radius:50%;
+  animation:bulbSeq 1.4s steps(1) infinite;
+}
+/* bulbSeq: alternates bulb between gold and red-imperial colors */
+@keyframes bulbSeq{
+  0%,100%{background:var(--gold);box-shadow:0 0 8px var(--gold);}
+  50%{background:var(--red-imperial);box-shadow:0 0 8px var(--red-imperial);}
+}
+/* Staggered delays create the "chase light" pattern along the strip */
+.marquee-bulb:nth-child(2n){animation-delay:-0.5s;}
+.marquee-bulb:nth-child(3n){animation-delay:-1s;}
+
+/* ── MAIN APP LAYOUT ────────────────────────────────────────────
+   .app is the main content container. It uses flexbox column layout
+   centered horizontally, with 100vh height and overflow hidden to
+   prevent any scrolling.
+
+   - z-index:10 places it above the background layers.
+   - padding: 18px top, 12px sides, 10px bottom.
+   - gap:5px between child elements (header, main-row, settings, etc.).
+   - All children use flex-shrink:0 to maintain their sizes.
+
+   .main-row: Contains the cabinet and jackpot bar. On mobile it
+   stacks column-reverse (jackpot on top); on desktop (>1040px)
+   it becomes a side-by-side row layout.
+   ─────────────────────────────────────────────────────────────── */
+.app{
+  position:relative;z-index:10;width:100%;
+  display:flex;flex-direction:column;align-items:center;
+  height:100vh;max-height:100vh;
+  padding:18px 12px 10px;gap:5px;overflow:hidden;
+}
+.main-row{
+  width:100%;max-width:1120px;
+  margin-inline:auto;
+  display:flex;flex-direction:column-reverse;
+  gap:6px;
+  /* v21: flex:1 so main-row claims the vertical space between header
+     and footer. Cabinet inherits this via its own flex:1 below. */
+  flex:1;
+  min-height:0;
+}
+/* Paytable panel is hidden by default (reserved for future use) */
+.paytable-panel{display:none;}
+
+/* Desktop layout: cabinet and jackpot bar side by side */
+@media(min-width:1040px){
+  .main-row{
+    flex-direction:row;
+    max-width:1120px;
+    align-items:stretch;
+    gap:14px;
+  }
+  .main-row .cabinet{flex:1;min-width:0;}
+  /* v18: jackpot-bar shrunk 220→150 to give reels more room
+     v21: stretch to full column height so the 4 tiers distribute
+     evenly alongside the now-taller cabinet */
+  .main-row .jackpot-bar{
+    width:150px;flex-shrink:0;
+    align-self:stretch;
+    grid-template-columns:1fr;
+    grid-template-rows:repeat(4,1fr);
+  }
+  /* v20: stack label above value — "50,100" / "8,888" were being truncated
+     when flexed side-by-side. Vertical stack gives the value full width. */
+  .main-row .jp-tier{
+    flex-direction:column;align-items:center;justify-content:center;
+    padding:6px 10px;gap:4px;
+  }
+  .main-row .jp-tier-label{margin-bottom:0;flex-shrink:0;font-size:clamp(9px,1vw,11px);letter-spacing:2px;padding:2px 10px;}
+  .main-row .jp-tier-val{
+    text-align:center;
+    font-size:clamp(14px,2vw,22px);
+    letter-spacing:1.5px;
+    white-space:nowrap;
+  }
+}
+
+/* ── SITE HEADER ────────────────────────────────────────────────
+   Contains the casino logo/title flanked by animated mascot lanterns.
+   - .header-badge: Horizontal flex container for mascots + title.
+   - .mascot: 52px circular badge with gold radial gradient and
+     a bobbing animation (mascotBob, 2.4s). The left and right
+     mascots bob in opposite phases via animation-delay.
+   - .site-title: "SPINFIRE" text with Cinzel Decorative font and
+     a gold gradient text fill (background-clip:text technique).
+   - .site-sub: Subtitle with Cinzel font, letter-spaced and gold-bright.
+
+   On win events, mascots get the "shaking" class which triggers
+   the lanternShake animation (swinging motion, 3 iterations).
+
+   To customize: change mascot emoji, adjust bobbing amplitude (±3px),
+   modify title gradient stops, or change subtitle text.
+   ─────────────────────────────────────────────────────────────── */
+.site-header{
+  display:flex;flex-direction:column;align-items:center;gap:0;
+  position:relative;width:100%;max-width:840px;flex-shrink:0;
+}
+.header-badge{display:flex;align-items:center;gap:18px;}
+.mascot{
+  width:52px;height:52px;border-radius:50%;
+  border:3px solid var(--gold);
+  background:radial-gradient(circle at 35% 30%,var(--gold-bright) 0%,var(--gold) 35%,var(--gold-deep) 75%,var(--gold-shadow) 100%);
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;
+  box-shadow:
+    inset 0 0 0 1px var(--gold-bright),
+    inset 0 4px 10px rgba(255,255,255,0.3),
+    inset 0 -6px 12px rgba(0,0,0,0.25),
+    0 0 18px rgba(255,215,0,0.45),
+    0 4px 10px rgba(0,0,0,0.5);
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+  animation:mascotBob 2.4s ease-in-out infinite alternate;
+  transform-origin:top center;
+}
+.mascot.right{animation-delay:-1.2s;}
+/* mascotBob: gentle vertical bobbing, ±3px amplitude */
+@keyframes mascotBob{from{transform:translateY(-3px);}to{transform:translateY(3px);}}
+
+/* lanternShake: triggered on wins — swinging pendulum motion
+   Runs 3 iterations then removed via JS animationend listener.
+   Rotation values decrease over time for natural damping effect. */
+@keyframes lanternShake{
+  0%,100%{transform:translateY(-3px) rotate(0deg);}
+  12%{transform:translateY(-3px) rotate(-22deg);}
+  25%{transform:translateY(-3px) rotate(22deg);}
+  37%{transform:translateY(-3px) rotate(-18deg);}
+  50%{transform:translateY(-3px) rotate(18deg);}
+  62%{transform:translateY(-3px) rotate(-12deg);}
+  75%{transform:translateY(-3px) rotate(12deg);}
+  87%{transform:translateY(-3px) rotate(-6deg);}
+}
+.mascot.shaking{animation:lanternShake 0.55s ease-in-out 3 !important;}
+
+/* Site title: gold gradient text using background-clip technique.
+   The gradient goes bright → gold → deep → shadow for a metallic look.
+   drop-shadow filter adds depth against the dark background. */
+.site-title{
+  font-family:'Cinzel Decorative','Cinzel',serif;font-weight:900;
+  font-size:clamp(28px,5vw,48px);letter-spacing:8px;line-height:1;
+  background:linear-gradient(180deg,var(--gold-bright) 0%,var(--gold) 35%,var(--gold-deep) 75%,var(--gold-shadow) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  filter:drop-shadow(0 2px 0 var(--red-dark)) drop-shadow(0 0 16px rgba(255,215,0,0.55));
+}
+.site-sub{
+  font-family:'Cinzel',serif;font-weight:600;
+  font-size:clamp(10px,2vw,13px);letter-spacing:8px;
+  color:var(--gold-bright);
+  text-shadow:0 0 8px var(--gold-deep),0 1px 0 var(--red-dark);
+  margin-top:2px;
+}
+
+/* ── JACKPOT TIERS ──────────────────────────────────────────────
+   Four progressive jackpot tiers: GRAND, MAJOR, MINOR, MINI.
+   Displayed in a 4-column grid (mobile) or vertical stack (desktop).
+
+   - .jackpot-bar: Container with dark gradient background and gold border.
+     The ::before pseudo creates a horizontal shimmer animation.
+   - .jp-tier: Individual tier card with dark gradient, gold border.
+   - .jp-tier-label: Pill-shaped badge with tier-specific gradient:
+     GRAND = gold→red, MAJOR = pink→red, MINOR = blue, MINI = yellow.
+   - .jp-tier-val: The numeric value with gold-bright color and glow.
+
+   Values tick up periodically via JS setInterval (see jpTicker in JS).
+
+   To customize: adjust tier label gradients, value font sizes,
+   or the shimmer animation speed (3s).
+   ─────────────────────────────────────────────────────────────── */
+.jackpot-bar{
+  width:100%;
+  display:grid;grid-template-columns:repeat(4,1fr);gap:6px;
+  padding:8px;
+  background:linear-gradient(180deg,var(--red-dark) 0%,var(--red-lacquer) 50%,var(--red-dark) 100%);
+  border:3px solid var(--gold);border-radius:14px;
+  box-shadow:
+    inset 0 0 0 1px var(--gold-bright),
+    inset 0 0 20px rgba(0,0,0,0.6),
+    0 0 22px rgba(255,215,0,0.28),
+    0 4px 20px rgba(0,0,0,0.7);
+  position:relative;
+  overflow:hidden;
+}
+/* shimmerBar: horizontal light sweep across the jackpot bar container */
+.jackpot-bar::before{
+  content:'';position:absolute;inset:0;border-radius:11px;pointer-events:none;
+  background:linear-gradient(90deg,transparent 0%,rgba(255,215,0,0.07) 50%,transparent 100%);
+  animation:shimmerBar 3s linear infinite;
+}
+@keyframes shimmerBar{from{transform:translateX(-100%);}to{transform:translateX(100%);}}
+
+/* Individual jackpot tier card — dark inset panel effect */
+.jp-tier{
+  display:flex;flex-direction:column;align-items:center;
+  padding:4px 6px;gap:2px;
+  border-radius:8px;
+  background:linear-gradient(180deg,var(--black-lacquer),var(--bg-deepest));
+  border:2px solid var(--gold-deep);
+  box-shadow:inset 0 0 12px rgba(0,0,0,0.85),inset 0 0 0 1px rgba(255,244,176,0.25);
+  position:relative;z-index:1;
+  min-width:0;
+  overflow:hidden;
+}
+/* Tier label pill — each tier has a unique color gradient */
+.jp-tier-label{
+  font-family:'Cinzel',serif;font-weight:900;
+  font-size:clamp(8px,1.2vw,12px);letter-spacing:2px;
+  padding:2px 8px;border-radius:999px;
+  box-shadow:0 1px 3px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.3);
+  text-align:center;white-space:nowrap;
+}
+.jp-tier.grand .jp-tier-label{background:linear-gradient(180deg,var(--gold),var(--red-imperial));color:#FFF;text-shadow:0 1px 2px rgba(0,0,0,0.7);}
+.jp-tier.major .jp-tier-label{background:linear-gradient(180deg,#FFB3D9,var(--red-imperial));color:#FFF;text-shadow:0 1px 2px rgba(0,0,0,0.6);}
+.jp-tier.minor .jp-tier-label{background:linear-gradient(180deg,#9AD0FF,#1E5C9E);color:#FFF;text-shadow:0 1px 2px rgba(0,0,0,0.6);}
+.jp-tier.mini  .jp-tier-label{background:linear-gradient(180deg,#FFE066,var(--gold-mid));color:var(--red-dark);}
+/* Tier value — large gold number with glow */
+.jp-tier-val{
+  font-family:'Cinzel',serif;font-weight:900;
+  font-size:clamp(12px,2.2vw,22px);letter-spacing:1px;
+  color:var(--gold-bright);
+  text-shadow:0 0 10px var(--gold),0 1px 2px rgba(0,0,0,0.8);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:100%;
+}
+
+/* ── CABINET ────────────────────────────────────────────────────
+   The main slot machine housing. Contains the reels, win banner,
+   balance display, and controls.
+
+   - Uses a double-background technique: inner gradient for the face,
+     outer gradient for the gold border frame (via border-box/padding-box).
+   - The 6px transparent border becomes the gold gradient border.
+   - ::before and ::after add decorative ❖ ornaments at top corners.
+   - border-radius:22px gives rounded corners.
+   - Multiple box-shadows create depth and outer glow.
+
+   To customize: change cabinet gradient colors (red-lacquer/red-dark),
+   border width (6px), corner radius (22px), or ornament character (❖).
+   ─────────────────────────────────────────────────────────────── */
+.cabinet{
+  width:100%;
+  background:
+    linear-gradient(180deg,var(--red-lacquer) 0%,var(--red-dark) 60%,var(--red-lacquer) 100%) padding-box,
+    linear-gradient(180deg,var(--gold-bright),var(--gold) 30%,var(--gold-deep) 70%,var(--gold-shadow)) border-box;
+  border:6px solid transparent;
+  border-radius:22px;
+  /* v21: padding bumped 12 → 14 for a more substantial frame */
+  padding:14px 12px;position:relative;
+  box-shadow:
+    0 0 0 2px var(--red-dark),
+    0 0 40px rgba(255,215,0,0.22),
+    0 20px 60px rgba(0,0,0,0.75),
+    inset 0 0 80px rgba(0,0,0,0.6);
+  /* v21: stretch to fill the main-row; internal flex lets reels-wrap grow */
+  flex:1;min-height:0;
+  display:flex;flex-direction:column;
+}
+/* Corner ornaments — positioned at top-left and top-right of cabinet */
+.cabinet::before,.cabinet::after{
+  content:'❖';position:absolute;top:-16px;
+  color:var(--gold);font-size:22px;
+  text-shadow:0 0 10px var(--gold),0 1px 0 var(--red-dark);
+  z-index:2;
+}
+.cabinet::before{left:18px;}
+.cabinet::after{right:18px;}
+
+/* ── REELS AREA ─────────────────────────────────────────────────
+   Container for the 5 reel columns, payline indicators, and
+   decorative side bulbs.
+
+   - Dark gradient background (black-lacquer → bg-deepest) with
+     gold border creates the reel window frame.
+   - ::before/::after add decorative gold dot patterns at top/bottom.
+   - Contains: payline-col (left/right), 5 .reel elements, payline-mid,
+     mult-pop overlay, and reel-deco side bulbs.
+   - overflow:hidden clips the reel strips to the visible window.
+
+   To customize: adjust gap between reels (6px), border width (3px),
+   padding (12px 8px), or the dot pattern in ::before/::after.
+   ─────────────────────────────────────────────────────────────── */
+.reels-wrap{
+  display:flex;gap:6px;
+  background:linear-gradient(180deg,var(--black-lacquer),var(--bg-deepest));
+  border:3px solid var(--gold);
+  border-radius:12px;padding:12px 8px;
+  position:relative;overflow:hidden;
+  box-shadow:inset 0 0 0 1px var(--gold-bright),inset 0 0 30px rgba(0,0,0,0.8);
+  /* v21: grow with the cabinet so reels fill the taller vertical space */
+  flex:1;min-height:0;
+}
+/* Decorative gold dot patterns at top and bottom of reel area */
+.reels-wrap::before,.reels-wrap::after{
+  content:'';position:absolute;left:0;right:0;height:6px;z-index:3;pointer-events:none;
+}
+.reels-wrap::before{
+  top:0;
+  background:repeating-linear-gradient(90deg,
+    var(--gold) 0 10px, transparent 10px 14px,
+    var(--gold-deep) 14px 18px, transparent 18px 22px);
+}
+.reels-wrap::after{
+  bottom:0;
+  background:repeating-linear-gradient(90deg,
+    var(--gold) 0 10px, transparent 10px 14px,
+    var(--gold-deep) 14px 18px, transparent 18px 22px);
+}
+
+/* ── PAYLINE SIDE INDICATORS ────────────────────────────────────
+   Narrow columns on left and right sides of the reel area showing
+   payline numbers (1, 2, 3 for top, middle, bottom rows).
+
+   - When the center payline is active (win), the middle cell (nth-child(2))
+     highlights with a gold background using the :has() selector.
+   - Each cell has gold text with Cinzel font.
+
+   To customize: adjust width (22px), font-size (13px), or the
+   active highlight gradient colors.
+   ─────────────────────────────────────────────────────────────── */
+.payline-col{
+  width:22px;flex-shrink:0;
+  display:flex;flex-direction:column;
+  background:linear-gradient(180deg,var(--red-dark),var(--black-lacquer));
+  border:2px solid var(--gold);border-radius:6px;
+  box-shadow:inset 0 0 0 1px var(--gold-bright);
+  align-self:stretch;
+  overflow:hidden;
+}
+.payline-cell{
+  flex:1;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Cinzel',serif;font-weight:900;font-size:13px;
+  color:var(--gold-bright);
+  text-shadow:0 0 6px var(--gold),0 1px 2px rgba(0,0,0,0.7);
+  border-bottom:1px solid var(--gold-deep);
+  transition:background 0.25s, color 0.25s;
+}
+.payline-cell:last-child{border-bottom:none;}
+/* Active payline: middle cell highlights gold when center payline wins */
+.reels-wrap:has(.payline-mid.active) .payline-col .payline-cell:nth-child(2){
+  background:linear-gradient(180deg,var(--gold),var(--gold-deep));
+  color:var(--red-dark);
+  text-shadow:0 1px 0 rgba(255,244,176,0.6);
+  box-shadow:inset 0 0 10px rgba(0,0,0,0.3);
+}
+
+/* ── INDIVIDUAL REEL COLUMNS ────────────────────────────────────
+   Each .reel is a column showing 3 symbol rows (top, middle, bottom).
+   Height = 3 × --symbol-h. Contains a .strip element that scrolls
+   vertically to simulate spinning.
+
+   - Background: cream gradient creates the classic white reel face.
+   - ::before/::after: top and bottom fade-to-transparent gradients
+     using --reel-fade, creating a vignette effect at reel edges.
+   - border: 2px solid red-deep with inner gold shadow.
+
+   During spinning, .reel-spinning adds blur(3.5px) to the strip.
+   .reel-spinning-slow adds lighter blur(1.5px) for the tension phase.
+
+   To customize: change reel background colors (cream/cream-deep),
+   border color, fade gradient (--reel-fade), or symbol height.
+   ─────────────────────────────────────────────────────────────── */
+.reel{
+  flex:1;
+  /* v22: removed fixed height. The parent .reels-wrap grows vertically
+     via flex:1 min-height:0; with align-items stretch on flex rows, the
+     child reels inherit the wrap's height. JS fitReelsToCabinet() then
+     updates --symbol-h = reel.clientHeight / 3 so each cell still shows
+     exactly 3 symbols tall. Previous: height: calc(3 * var(--symbol-h)). */
+  min-height:0;
+  align-self:stretch;
+  background:linear-gradient(180deg,var(--cream) 0%,var(--cream-deep) 50%,var(--cream) 100%);
+  border-radius:6px;overflow:hidden;position:relative;
+  border:2px solid var(--red-deep);
+  box-shadow:
+    inset 0 0 0 1px var(--gold),
+    inset 0 0 18px rgba(139,0,0,0.2);
+}
+/* Top/bottom fade overlays — creates depth at reel edges */
+.reel::before,.reel::after{content:'';position:absolute;left:0;right:0;z-index:3;pointer-events:none;}
+.reel::before{top:0;height:40px;background:linear-gradient(180deg,var(--reel-fade) 0%,transparent 100%);}
+.reel::after{bottom:0;height:40px;background:linear-gradient(0deg,var(--reel-fade) 0%,transparent 100%);}
+
+/* v19: reverted to v8 spin behavior — no blur during spin, no filter
+   transitions, no GPU compositing hints. The .reel-spinning and
+   .reel-spinning-slow classes are no longer applied by JS (flicker
+   system removed below). Leaving the class names unreferenced here
+   is deliberate — nothing else styles them. */
+
+/* ── STRIP & SYMBOL CELLS ───────────────────────────────────────
+   .strip: Absolutely positioned vertical column of symbol cells.
+     Scrolls via translateY() to show different symbols.
+     will-change:transform optimizes GPU compositing.
+     isolation:isolate creates a stacking context for z-index.
+
+   .sym: Individual symbol cell, height = --symbol-h.
+     Contains emoji text centered with flexbox.
+     filter:drop-shadow adds depth to the emoji glyph.
+     ::before pseudo creates a subtle card-like background
+     with gold-tinted gradient and thin gold border.
+
+   To customize: change symbol font-size (clamp 36-66px),
+   drop-shadow intensity, or ::before gradient/border colors.
+   ─────────────────────────────────────────────────────────────── */
+.strip{
+  position:absolute;top:0;left:0;right:0;
+  display:flex;flex-direction:column;
+  will-change:transform;transition:none;
+  z-index:0;
+  isolation:isolate;
+}
+.sym{
+  height:var(--symbol-h);
+  display:flex;align-items:center;justify-content:center;
+  font-size:clamp(36px,6vw,66px);
+  position:relative;transition:none;
+  filter:drop-shadow(0 2px 0 rgba(0,0,0,0.4)) drop-shadow(0 0 6px rgba(200,16,46,0.25));
+}
+/* Symbol card background — subtle gradient with thin gold border.
+   This creates the "card face" appearance behind each emoji. */
+.sym::before{
+  content:'';position:absolute;
+  top:6px;right:5px;bottom:6px;left:5px;
+  border-radius:8px;
+  background:linear-gradient(180deg,rgba(255,215,0,0.14) 0%,rgba(200,16,46,0.08) 100%);
+  box-shadow:inset 0 0 0 1px rgba(201,162,39,0.35);
+  z-index:-1;pointer-events:none;
+}
+
+/* ── ENHANCED SYMBOL CARDS (NEW in v16) ─────────────────────────
+   Casino-style gold-framed card faces for each symbol type.
+   Uses [data-id] attribute selectors to apply unique visual
+   treatments per symbol. Transforms basic emojis into rich,
+   casino-grade card elements similar to reference images.
+
+   Symbol visual hierarchy (low → high intensity):
+   - Common: cherry, lemon — subtle tint, thin frame
+   - Medium: bell — warm golden glow
+   - Rare: star, seven — bold gold frame, animated glow
+   - Ultra-rare: bar, diamond — max impact, shimmer animation
+   - Special: gift — festive pulsing border
+
+   Each symbol gets:
+   1. ::before override — unique gradient background tint
+   2. ::after frame — gold card border with type-specific glow
+   ─────────────────────────────────────────────────────────────── */
+
+/* Gold card frame overlay — adds a subtle border to every symbol cell */
+.reel .sym::after{
+  content:'';position:absolute;
+  top:4px;right:3px;bottom:4px;left:3px;
+  border-radius:10px;
+  border:1.5px solid rgba(201,162,39,0.25);
+  pointer-events:none;z-index:-1;
+  transition:border-color 0.3s,box-shadow 0.3s;
+}
+
+/* Cherry — warm red-tinted card with subtle red inner glow */
+.reel .sym[data-id="cherry"]::before{
+  background:linear-gradient(180deg,rgba(255,80,80,0.16) 0%,rgba(200,16,46,0.06) 100%);
+  box-shadow:inset 0 0 0 1px rgba(255,100,100,0.25),inset 0 0 10px rgba(255,50,50,0.08);
+}
+/* Lemon — citrus yellow-tinted card */
+.reel .sym[data-id="lemon"]::before{
+  background:linear-gradient(180deg,rgba(255,220,50,0.16) 0%,rgba(255,200,0,0.06) 100%);
+  box-shadow:inset 0 0 0 1px rgba(255,220,50,0.25),inset 0 0 10px rgba(255,200,0,0.08);
+}
+/* Bell — warm golden glow card, slightly more prominent */
+.reel .sym[data-id="bell"]::before{
+  background:linear-gradient(180deg,rgba(255,215,0,0.22) 0%,rgba(218,165,32,0.10) 100%);
+  box-shadow:inset 0 0 0 1px rgba(255,215,0,0.4),inset 0 0 14px rgba(255,215,0,0.12);
+}
+.reel .sym[data-id="bell"]::after{border-color:rgba(255,215,0,0.4);}
+/* Star — bright gold frame with soft outer glow */
+.reel .sym[data-id="star"]::before{
+  background:linear-gradient(180deg,rgba(255,215,0,0.28) 0%,rgba(255,180,0,0.14) 100%);
+  box-shadow:inset 0 0 0 2px rgba(255,215,0,0.5),inset 0 0 18px rgba(255,215,0,0.18);
+}
+.reel .sym[data-id="star"]::after{
+  border-color:rgba(255,215,0,0.6);border-width:2px;
+  box-shadow:0 0 8px rgba(255,215,0,0.2);
+}
+/* Lucky 7 — premium red-gold card with bold frame and accent glow */
+.reel .sym[data-id="seven"]::before{
+  background:linear-gradient(180deg,rgba(230,57,70,0.22) 0%,rgba(200,16,46,0.12) 100%);
+  box-shadow:inset 0 0 0 2px rgba(255,215,0,0.5),inset 0 0 16px rgba(230,57,70,0.15);
+}
+.reel .sym[data-id="seven"]::after{
+  border-color:rgba(255,215,0,0.6);border-width:2.5px;
+  box-shadow:0 0 10px rgba(255,215,0,0.25);
+}
+/* BAR — ultra-premium gold card with animated pulsing glow */
+.reel .sym[data-id="bar"]::before{
+  background:linear-gradient(180deg,rgba(255,215,0,0.30) 0%,rgba(201,162,39,0.18) 100%);
+  box-shadow:inset 0 0 0 2px rgba(255,244,176,0.55),inset 0 0 20px rgba(255,215,0,0.20);
+}
+.reel .sym[data-id="bar"]::after{
+  border-color:rgba(255,244,176,0.65);border-width:2.5px;
+  animation:barCardPulse 2s ease-in-out infinite alternate;
+}
+/* barCardPulse: slow glow pulse on BAR symbol frame */
+@keyframes barCardPulse{
+  from{box-shadow:0 0 8px rgba(255,215,0,0.2);}
+  to{box-shadow:0 0 18px rgba(255,215,0,0.45);}
+}
+/* Diamond — brilliant blue-white shimmer, the most prestigious symbol.
+   Has an animated border glow that pulses between blue shades. */
+.reel .sym[data-id="diamond"]::before{
+  background:linear-gradient(180deg,rgba(100,200,255,0.24) 0%,rgba(180,220,255,0.14) 100%);
+  box-shadow:inset 0 0 0 2px rgba(100,200,255,0.5),inset 0 0 22px rgba(100,200,255,0.18);
+}
+.reel .sym[data-id="diamond"]::after{
+  border-color:rgba(150,220,255,0.7);border-width:2.5px;
+  animation:diamondShimmer 1.8s ease-in-out infinite alternate;
+}
+/* diamondShimmer: pulsing icy blue glow on diamond symbol frame */
+@keyframes diamondShimmer{
+  from{box-shadow:0 0 10px rgba(100,200,255,0.25);border-color:rgba(150,220,255,0.5);}
+  to{box-shadow:0 0 22px rgba(100,200,255,0.55);border-color:rgba(200,240,255,0.8);}
+}
+/* Gift — festive card with alternating red/gold border pulse */
+.reel .sym[data-id="gift"]::before{
+  background:linear-gradient(180deg,rgba(255,100,100,0.18) 0%,rgba(255,215,0,0.10) 100%);
+  box-shadow:inset 0 0 0 2px rgba(255,100,100,0.4),inset 0 0 14px rgba(255,50,50,0.12);
+}
+.reel .sym[data-id="gift"]::after{
+  border-color:rgba(255,100,100,0.5);
+  animation:giftPulse 1.5s ease-in-out infinite alternate;
+}
+/* giftPulse: alternates border between red and gold for festive feel */
+@keyframes giftPulse{
+  from{border-color:rgba(255,100,100,0.4);box-shadow:0 0 6px rgba(255,100,100,0.15);}
+  to{border-color:rgba(255,215,0,0.5);box-shadow:0 0 12px rgba(255,215,0,0.3);}
+}
+
+/* ── PAYLINE HIGHLIGHT OVERLAY ──────────────────────────────────
+   Horizontal overlay positioned on the center (middle) row of the
+   reel area. When a win occurs, JS adds the "active" class which
+   shows gold borders and a glowing box-shadow.
+
+   - Positioned using top: calc(12px + --symbol-h) to align with row 2.
+   - Left/right: 34px to clear the payline-col side indicators.
+   - z-index:4 places it above reel content but below modals.
+   ─────────────────────────────────────────────────────────────── */
+.payline-mid{
+  position:absolute;left:34px;right:34px;z-index:4;pointer-events:none;
+  top:calc(12px + var(--symbol-h));
+  height:var(--symbol-h);
+  border-top:2px solid transparent;border-bottom:2px solid transparent;
+  transition:border-color 0.2s;
+}
+.payline-mid.active{
+  border-top-color:var(--gold);border-bottom-color:var(--gold);
+  box-shadow:0 0 24px rgba(255,215,0,0.55),inset 0 0 20px rgba(255,215,0,0.14);
+}
+
+/* ── REEL SIDE DECORATIVE BULBS ─────────────────────────────────
+   Small animated bulbs on the left and right sides of the reel area.
+   6 bulbs per side, alternating gold/red with staggered timing.
+   Purely decorative — adds casino ambiance.
+
+   To customize: change bulb count (in HTML), size (12px),
+   or animation colors/speed in @keyframes decoBulb.
+   ─────────────────────────────────────────────────────────────── */
+.reel-deco{position:absolute;left:-26px;top:0;bottom:0;width:20px;display:flex;flex-direction:column;justify-content:space-around;align-items:center;}
+.reel-deco.right{left:auto;right:-26px;}
+.deco-bulb{width:12px;height:12px;border-radius:50%;animation:decoBulb 1s steps(1) infinite;}
+@keyframes decoBulb{0%,100%{background:var(--gold);box-shadow:0 0 6px var(--gold);}50%{background:var(--red-imperial);box-shadow:0 0 6px var(--red-imperial);}}
+.deco-bulb:nth-child(2n){animation-delay:-0.5s;}
+.deco-bulb:nth-child(3n){animation-delay:-0.25s;}
+
+/* ── WIN BANNER ─────────────────────────────────────────────────
+   Status message bar below the reels. Shows spin results, win amounts,
+   and countdown timer when out of credits.
+
+   States (toggled via JS className):
+   - Default: dark background, gold text — "Place your bet..."
+   - .win: gold shimmer gradient background — win messages
+   - .loss: muted text — loss/encouragement messages
+   - .jackpot: red+gold fast shimmer — jackpot announcements
+   - .countdown: pulsing red glow — refill countdown timer
+
+   winShimmer animation: sweeps the gradient 300% for a flowing gold effect.
+   countdownGlow: pulses box-shadow between normal and red glow.
+
+   To customize: adjust min-height (32px), border-radius (10px),
+   font-size, or animation speeds.
+   ─────────────────────────────────────────────────────────────── */
+.win-banner{
+  margin-top:6px;min-height:32px;
+  display:flex;align-items:center;justify-content:center;
+  border:2px solid var(--gold-deep);border-radius:10px;
+  background:linear-gradient(180deg,var(--black-lacquer),var(--red-dark));
+  box-shadow:inset 0 0 0 1px var(--gold-bright),inset 0 0 15px rgba(0,0,0,0.7);
+  font-family:'Cinzel',serif;font-weight:700;
+  font-size:clamp(11px,1.8vw,14px);letter-spacing:1px;
+  text-align:center;padding:4px 12px;color:var(--gold-bright);
+  transition:all 0.25s;
+}
+.win-banner.win{
+  border-color:var(--gold);color:var(--red-dark);
+  background:linear-gradient(90deg,var(--gold-bright),var(--gold),var(--gold-deep),var(--gold),var(--gold-bright));
+  background-size:300% 100%;
+  animation:winShimmer 1s linear infinite;
+  text-shadow:0 1px 0 rgba(255,244,176,0.5);
+}
+@keyframes winShimmer{from{background-position:0%;}to{background-position:300%;}}
+.win-banner.loss{color:rgba(255,240,200,0.5);font-size:clamp(10px,1.6vw,13px);}
+.win-banner.jackpot{
+  border-color:var(--red-imperial);
+  background:linear-gradient(90deg,var(--gold),var(--red-bright),var(--gold),var(--red-bright),var(--gold));
+  background-size:300% 100%;
+  animation:winShimmer 0.6s linear infinite;
+  color:#FFF;text-shadow:0 1px 3px rgba(0,0,0,0.7);
+}
+.win-banner.countdown{
+  border-color:var(--red-imperial);color:#FFDADA;
+  background:linear-gradient(180deg,var(--red-lacquer),var(--red-dark));
+  animation:countdownGlow 1s ease-in-out infinite alternate;
+}
+@keyframes countdownGlow{from{box-shadow:inset 0 0 0 1px var(--gold-bright),inset 0 0 15px rgba(0,0,0,0.7);}to{box-shadow:inset 0 0 0 1px var(--gold-bright),0 0 18px var(--red-imperial);}}
+
+/* ── BALANCE PLAQUES ────────────────────────────────────────────
+   Three-column grid showing Balance, Free Spins, and Total Winnings.
+
+   - .bal-card: Dark gradient card with gold border and corner accents
+     (::before = top-left corner, ::after = bottom-right corner).
+   - .bal-label: Small uppercase label text (e.g., "BALANCE").
+   - .bal-value: Large gold number, animated via tickCounter() in JS.
+   - .free-spin-pill: Special variant with pulsing glow animation
+     when free spins > 0. Gets "zero" class when count is 0.
+   - .total-win: Red-glowing value variant for total winnings.
+
+   To customize: adjust grid columns, card padding, corner accent
+   size (8px), or the pillPulse animation intensity.
+   ─────────────────────────────────────────────────────────────── */
+.balance-bar{
+  width:100%;
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;
+  margin-top:6px;
+  flex-shrink:0;
+}
+.bal-card,.free-spin-pill{
+  background:linear-gradient(180deg,var(--black-lacquer) 0%,var(--red-dark) 100%);
+  border:2px solid var(--gold);
+  border-radius:10px;
+  /* v21: bump vertical padding so plaques don't look cramped next to taller reels */
+  padding:7px 10px;
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  position:relative;
+  box-shadow:
+    inset 0 0 0 1px var(--gold-bright),
+    inset 0 0 15px rgba(0,0,0,0.6),
+    0 2px 8px rgba(0,0,0,0.5);
+}
+/* Corner accent borders — decorative L-shaped gold corners */
+.bal-card::before,.bal-card::after,
+.free-spin-pill::before,.free-spin-pill::after{
+  content:'';position:absolute;width:8px;height:8px;
+  border:2px solid var(--gold);
+}
+.bal-card::before,.free-spin-pill::before{top:2px;left:2px;border-right:none;border-bottom:none;}
+.bal-card::after,.free-spin-pill::after{bottom:2px;right:2px;border-left:none;border-top:none;}
+.bal-label{
+  font-family:'Cinzel',serif;font-weight:700;
+  font-size:9px;letter-spacing:3px;text-transform:uppercase;
+  color:var(--gold-bright);
+  text-shadow:0 1px 2px rgba(0,0,0,0.8);
+}
+.bal-value{
+  font-family:'Cinzel',serif;font-weight:900;
+  font-size:clamp(15px,2.4vw,24px);letter-spacing:2px;
+  color:var(--gold-bright);
+  text-shadow:0 0 10px var(--gold),0 1px 2px rgba(0,0,0,0.8);
+}
+.bal-card.total-win .bal-value{
+  color:#FFF;
+  text-shadow:0 0 10px var(--red-bright),0 0 20px var(--red-imperial),0 1px 2px #000;
+}
+/* Free spin pill — pulses when free spins are available */
+.free-spin-pill{
+  border-radius:10px;white-space:nowrap;
+  animation:pillPulse 1.2s ease-in-out infinite alternate;
+}
+@keyframes pillPulse{
+  from{box-shadow:inset 0 0 0 1px var(--gold-bright),inset 0 0 15px rgba(0,0,0,0.6),0 0 6px rgba(255,215,0,0.35);}
+  to{box-shadow:inset 0 0 0 1px var(--gold-bright),inset 0 0 15px rgba(0,0,0,0.6),0 0 20px rgba(255,215,0,0.8);}
+}
+/* "zero" state — no pulse, subdued appearance when count = 0 */
+.free-spin-pill.zero{
+  animation:none;
+  box-shadow:
+    inset 0 0 0 1px var(--gold-bright),
+    inset 0 0 15px rgba(0,0,0,0.6),
+    0 2px 8px rgba(0,0,0,0.5);
+}
+.free-spin-pill.zero .bal-value{color:var(--text-sub);text-shadow:0 1px 2px rgba(0,0,0,0.8);}
+
+/* ── CONTROLS ───────────────────────────────────────────────────
+   Two-column grid: left = bet panel, right = spin column.
+
+   BET PANEL (.bet-panel):
+   - Panel label "YOUR BET" at top
+   - Bet adjustment row: − button | input field | + button
+   - Quick-bet buttons: 100, 200, 500, MAX
+   - .adj-btn: Round red gradient buttons (32px, gold border)
+   - #betInput: Dark input field with gold border, Cinzel font
+   - .qbet: Small quick-bet preset buttons
+
+   SPIN COLUMN (.spin-col):
+   - Streak dots bar (5 dots tracking consecutive wins)
+   - Spin button (large 100px circular gold button)
+   - "Space = Spin" hint text
+   - Auto-spin toggle button
+
+   To customize: change grid layout (controls grid-template-columns),
+   button sizes, input styling, or quick-bet values.
+   ─────────────────────────────────────────────────────────────── */
+/* v21: align-items: stretch so bet panel and spin column match height,
+   filling the taller cabinet without leaving dead space below the controls. */
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:stretch;margin-top:6px;}
+.bet-panel,.token-panel{
+  background:linear-gradient(180deg,var(--black-lacquer),var(--red-dark));
+  border:2px solid var(--gold);border-radius:14px;padding:8px;
+  display:flex;flex-direction:column;gap:5px;
+  box-shadow:inset 0 0 0 1px var(--gold-bright),inset 0 0 20px rgba(0,0,0,0.6);
+  width:100%;
+}
+.panel-label{
+  font-family:'Cinzel',serif;font-weight:700;
+  font-size:10px;letter-spacing:4px;text-transform:uppercase;
+  color:var(--gold-bright);text-align:center;
+  text-shadow:0 1px 2px rgba(0,0,0,0.7);
+}
+.bet-row{display:flex;align-items:center;gap:5px;}
+/* Bet adjust buttons (+ and −) — red gradient with gold border */
+.adj-btn{
+  /* v21: 32 → 42px for a chunkier hit target matching the enlarged controls */
+  width:42px;height:42px;border-radius:8px;
+  border:2px solid var(--gold);
+  background:linear-gradient(180deg,var(--red-bright),var(--red-deep));
+  color:var(--gold-bright);font-size:24px;font-weight:900;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform 0.1s,box-shadow 0.15s;flex-shrink:0;
+  text-shadow:0 1px 2px rgba(0,0,0,0.8);
+  box-shadow:inset 0 0 0 1px var(--gold-bright),inset 0 -4px 8px rgba(0,0,0,0.4);
+}
+.adj-btn:hover:not(:disabled){box-shadow:inset 0 0 0 1px var(--gold-bright),0 0 14px var(--gold);}
+.adj-btn:active:not(:disabled){transform:scale(0.9);}
+.adj-btn:disabled{opacity:0.35;cursor:not-allowed;}
+/* Bet input field — dark recessed appearance with gold accent */
+#betInput{
+  flex:1;min-width:0;
+  background:linear-gradient(180deg,var(--bg-deepest),var(--black-lacquer));
+  border:2px solid var(--gold);border-radius:8px;
+  color:var(--gold-bright);
+  font-family:'Cinzel',serif;font-weight:900;
+  /* v21: bet input scaled up to match larger bet panel */
+  font-size:clamp(18px,2.8vw,26px);letter-spacing:2px;text-align:center;padding:6px 4px;outline:none;
+  box-shadow:inset 0 0 10px rgba(0,0,0,0.85);
+}
+#betInput:focus{box-shadow:inset 0 0 10px rgba(0,0,0,0.85),0 0 12px var(--gold);}
+/* Quick bet preset buttons row */
+.quick-bets{display:flex;gap:4px;flex-wrap:wrap;}
+.qbet{
+  flex:1;min-width:36px;
+  background:linear-gradient(180deg,var(--red-dark),var(--black-lacquer));
+  border:1.5px solid var(--gold-deep);border-radius:6px;
+  color:var(--gold-bright);
+  font-family:'Cinzel',serif;font-weight:700;font-size:clamp(9px,1.5vw,11px);
+  padding:4px 2px;cursor:pointer;transition:all 0.15s;text-align:center;
+}
+.qbet:hover{background:linear-gradient(180deg,var(--red-lacquer),var(--red-dark));border-color:var(--gold);box-shadow:0 0 10px rgba(255,215,0,0.4);}
+
+/* ── TOKENS ─────────────────────────────────────────────────────
+   Special-use tokens: Lucky, Jackpot, 2× Win.
+   Each token row shows icon, name, description, and count.
+   - .tok: Token row with hover glow effect.
+   - .tok.active: Currently selected token — gold glow animation.
+   - .tok.disabled: Greyed out when count is 0 or spinning.
+   - .tok-count: Numeric badge showing remaining uses.
+
+   Tokens are consumed on use. Earned via win streaks.
+   ─────────────────────────────────────────────────────────────── */
+.tokens-grid{display:flex;flex-direction:column;gap:4px;}
+.tok{
+  display:flex;align-items:center;gap:8px;
+  background:linear-gradient(90deg,var(--red-dark),var(--black-lacquer));
+  border:1.5px solid var(--gold-deep);border-radius:9px;padding:4px 10px;cursor:pointer;
+  transition:all 0.15s;font-size:12px;font-weight:700;
+}
+.tok:hover:not(.disabled){border-color:var(--gold);box-shadow:0 0 10px rgba(255,215,0,0.4);}
+.tok.active{border-color:var(--gold);background:linear-gradient(90deg,rgba(255,215,0,0.18),rgba(200,16,46,0.18));animation:tokActive 0.8s ease-in-out infinite alternate;}
+@keyframes tokActive{from{box-shadow:0 0 6px var(--gold);}to{box-shadow:0 0 20px var(--gold);}}
+.tok.disabled{opacity:0.35;cursor:not-allowed;}
+.tok-icon{font-size:1.4rem;filter:drop-shadow(0 0 4px var(--gold));}
+.tok-info{flex:1;display:flex;flex-direction:column;}
+.tok-name{color:var(--gold-bright);font-family:'Cinzel',serif;font-size:11px;letter-spacing:1px;font-weight:700;}
+.tok-desc{color:var(--text-sub);font-size:10px;margin-top:1px;}
+.tok-count{
+  background:linear-gradient(180deg,var(--bg-deepest),var(--black-lacquer));
+  border:1.5px solid var(--gold);border-radius:6px;
+  padding:2px 7px;font-family:'Cinzel',serif;font-weight:900;
+  font-size:16px;color:var(--gold-bright);letter-spacing:1px;
+  box-shadow:inset 0 0 8px rgba(0,0,0,0.85);
+}
+.tok-hint{font-size:10px;color:var(--text-sub);text-align:center;line-height:1.4;font-style:italic;}
+.spin-hint{font-family:'Cinzel',serif;font-size:9px;letter-spacing:2px;color:var(--gold-deep);text-align:center;text-transform:uppercase;}
+
+/* ── SPIN BUTTON ────────────────────────────────────────────────
+   Large circular button (100px) with a gold radial gradient.
+   The most prominent interactive element in the UI.
+
+   - Radial gradient: bright center → dark gold edge for 3D sphere look.
+   - Multiple box-shadows: inner ring, outer ring, glow, depth shadow.
+   - :hover scales up 6% with enhanced glow.
+   - :active scales down 6% for press feedback.
+   - :disabled triggers spinPulse rotation animation during spins.
+
+   To customize: change size (width/height), gradient stops,
+   glow intensity, or the ↻ character inside.
+   ─────────────────────────────────────────────────────────────── */
+.spin-col{display:flex;flex-direction:column;align-items:center;gap:5px;}
+/* v18: "cooler" spin button.
+   - Rotating conic-gradient aura ring around the button (idle ready state)
+   - Idle breathing pulse (subtle scale + glow throb)
+   - Hover lifts the button and intensifies the aura
+   - Click: quick radial flash via ::after pseudo
+   - Disabled (spinning) state: the button itself rotates (existing spinPulse) */
+.spin-btn{
+  position:relative;
+  /* v21: 108 → 140px to anchor the controls row visually and fill bottom space */
+  width:140px;height:140px;border-radius:50%;
+  border:none;
+  background:radial-gradient(circle at 35% 30%,var(--gold-bright) 0%,var(--gold) 35%,var(--gold-mid) 65%,var(--gold-shadow) 100%);
+  color:var(--red-dark);
+  font-family:'Cinzel',serif;font-weight:900;
+  font-size:72px;line-height:1;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:
+    0 0 0 2px var(--red-dark),
+    0 0 0 6px var(--gold),
+    0 0 0 8px var(--gold-shadow),
+    0 0 36px rgba(255,215,0,0.65),
+    0 10px 26px rgba(0,0,0,0.75),
+    inset 0 6px 20px rgba(255,255,255,0.4),
+    inset 0 -10px 22px rgba(0,0,0,0.35);
+  transition:transform 0.18s cubic-bezier(0.2,0.9,0.3,1.2),box-shadow 0.25s;
+  text-shadow:0 2px 3px rgba(255,244,176,0.6);
+  animation:spinBtnBreathe 2.6s ease-in-out infinite alternate;
+  z-index:1;
+}
+/* Rotating aura ring — sits behind the button, creates a "ready to spin" vibe */
+.spin-btn::before{
+  content:'';
+  position:absolute;inset:-14px;
+  border-radius:50%;
+  background:conic-gradient(from 0deg,
+    rgba(255,215,0,0) 0deg,
+    rgba(255,215,0,0.55) 60deg,
+    rgba(255,244,176,0.9) 120deg,
+    rgba(200,16,46,0.6) 200deg,
+    rgba(255,215,0,0.5) 280deg,
+    rgba(255,215,0,0) 360deg);
+  filter:blur(6px);
+  z-index:-1;
+  animation:spinBtnAura 4s linear infinite;
+  opacity:0.85;
+  pointer-events:none;
+}
+/* Click flash — expands + fades from center */
+.spin-btn::after{
+  content:'';
+  position:absolute;inset:0;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,255,0.85) 0%,rgba(255,215,0,0.3) 40%,transparent 70%);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 0.12s;
+}
+.spin-btn:active:not(:disabled)::after{opacity:1;transition:opacity 0s;}
+@keyframes spinBtnBreathe{
+  from{box-shadow:0 0 0 2px var(--red-dark),0 0 0 6px var(--gold),0 0 0 8px var(--gold-shadow),0 0 30px rgba(255,215,0,0.55),0 10px 26px rgba(0,0,0,0.75),inset 0 6px 20px rgba(255,255,255,0.4),inset 0 -10px 22px rgba(0,0,0,0.35);}
+  to{box-shadow:0 0 0 2px var(--red-dark),0 0 0 6px var(--gold),0 0 0 8px var(--gold-shadow),0 0 48px rgba(255,215,0,0.85),0 10px 30px rgba(0,0,0,0.75),inset 0 6px 20px rgba(255,255,255,0.45),inset 0 -10px 22px rgba(0,0,0,0.35);}
+}
+@keyframes spinBtnAura{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+.spin-btn:hover:not(:disabled){
+  transform:scale(1.07);
+  box-shadow:
+    0 0 0 2px var(--red-dark),
+    0 0 0 6px var(--gold),
+    0 0 0 8px var(--gold-shadow),
+    0 0 70px rgba(255,215,0,0.95),
+    0 12px 34px rgba(0,0,0,0.8),
+    inset 0 6px 20px rgba(255,255,255,0.55),
+    inset 0 -10px 22px rgba(0,0,0,0.35);
+}
+.spin-btn:hover:not(:disabled)::before{opacity:1;animation-duration:2.5s;filter:blur(8px);}
+.spin-btn:active:not(:disabled){transform:scale(0.92);}
+/* v20: rotation is now bound to .is-spinning (applied only while S.spinning),
+   not :disabled. Disabled-but-not-spinning states (refill countdown,
+   insufficient balance) render a dimmed/locked button with no rotation. */
+.spin-btn:disabled{
+  cursor:not-allowed;
+  opacity:0.55;
+  animation:none;              /* kill the idle breathe pulse */
+}
+.spin-btn:disabled::before{animation-play-state:paused;opacity:0.35;}
+.spin-btn.is-spinning{animation:spinPulse 0.7s linear infinite;}
+.spin-btn.is-spinning::before{animation-duration:1.2s;opacity:1;filter:blur(10px);}
+@keyframes spinPulse{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+
+/* ── AUTO-SPIN BUTTON ───────────────────────────────────────────
+   Toggle button for automatic continuous spinning.
+   - Default: dark background with gold border.
+   - .active: gold background indicating auto-spin is running.
+   Text toggles between "AUTO-SPIN" and "STOP AUTO" via JS.
+   ─────────────────────────────────────────────────────────────── */
+.auto-btn{
+  width:100%;padding:7px 12px;
+  border:2px solid var(--gold-deep);border-radius:10px;
+  background:linear-gradient(180deg,var(--red-dark),var(--black-lacquer));
+  color:var(--gold-bright);
+  font-family:'Cinzel',serif;font-weight:700;
+  font-size:11px;letter-spacing:2px;cursor:pointer;transition:all 0.2s;
+  box-shadow:inset 0 0 0 1px var(--gold-bright);
+}
+.auto-btn:hover{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold-bright),0 0 12px rgba(255,215,0,0.4);}
+.auto-btn.active{
+  border-color:var(--gold);color:var(--red-dark);
+  background:linear-gradient(180deg,var(--gold),var(--gold-deep));
+  box-shadow:0 0 16px rgba(255,215,0,0.6);
+}
+
+/* ── STREAK DOTS ────────────────────────────────────────────────
+   Five dots tracking consecutive wins. Visual feedback for streaks.
+   - Default: dim, nearly invisible.
+   - .lit: Gold, glowing — indicates a win in this streak position.
+   - .fire: Red with animated glow — at max streak (5 wins).
+
+   3-win streak awards +2 Free Spins; 5-win streak awards +1 Lucky Token.
+   ─────────────────────────────────────────────────────────────── */
+.streak-bar{
+  display:flex;gap:4px;padding:4px 8px;
+  background:linear-gradient(180deg,var(--bg-deepest),var(--black-lacquer));
+  border:1.5px solid var(--gold-deep);border-radius:8px;
+  box-shadow:inset 0 0 8px rgba(0,0,0,0.85);
+}
+.streak-dot{
+  width:10px;height:10px;border-radius:50%;
+  background:rgba(255,244,176,0.12);
+  border:1px solid var(--gold-deep);transition:all 0.3s;
+}
+.streak-dot.lit{background:var(--gold);border-color:var(--gold);box-shadow:0 0 6px var(--gold);}
+.streak-dot.fire{background:var(--red-imperial);border-color:var(--gold);animation:fireDot 0.4s ease-in-out infinite alternate;}
+@keyframes fireDot{from{box-shadow:0 0 4px var(--red-imperial);}to{box-shadow:0 0 14px var(--gold);}}
+
+/* ── WINNING SYMBOL FLASH ───────────────────────────────────────
+   Applied to .sym elements in winning payline rows.
+   Scales up to 1.24× with intense gold/red glow.
+   Removed after 2600ms timeout in JS.
+   ─────────────────────────────────────────────────────────────── */
+.sym.winner{animation:symWin 0.55s ease-in-out infinite alternate;}
+@keyframes symWin{
+  from{transform:scale(1);filter:drop-shadow(0 0 8px var(--gold));}
+  to{transform:scale(1.24);filter:drop-shadow(0 0 24px var(--gold)) drop-shadow(0 0 40px var(--red-imperial));}
+}
+
+/* ── MULTIPLIER POP ─────────────────────────────────────────────
+   Large "×N!" text that appears center-screen when a bonus
+   multiplier triggers (every 7th spin). Uses Cinzel Decorative
+   at 96px with gold glow and red shadow.
+
+   Animation: scales from 0.2→1.3→1.0→1.1 with fade out.
+   ─────────────────────────────────────────────────────────────── */
+.mult-pop{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-family:'Cinzel Decorative','Cinzel',serif;font-weight:900;
+  font-size:96px;letter-spacing:4px;
+  color:var(--gold-bright);
+  text-shadow:0 0 20px var(--red-imperial),0 0 40px var(--gold),4px 4px 0 var(--red-dark);
+  pointer-events:none;z-index:20;opacity:0;
+}
+.mult-pop.show{animation:multPop 1.5s ease-out forwards;}
+@keyframes multPop{0%{opacity:0;transform:translate(-50%,-50%) scale(0.2);}30%{opacity:1;transform:translate(-50%,-50%) scale(1.3);}70%{opacity:1;transform:translate(-50%,-50%) scale(1);}100%{opacity:0;transform:translate(-50%,-50%) scale(1.1);}}
+
+/* ── CELEBRATION OVERLAY ────────────────────────────────────────
+   Full-screen overlay for big win / jackpot celebrations.
+   Shows large animated text + confetti particles.
+
+   - .cel-text: "BIG WIN!" or "JACKPOT!!!" in Cinzel Decorative,
+     scales in with bounce easing (celPop animation).
+   - .confetti-piece: Small colored rectangles that fall from top
+     with rotation (confettiFall animation).
+   - Shown for 2600ms, then faded out and cleared via JS.
+   ─────────────────────────────────────────────────────────────── */
+.celebration{position:fixed;inset:0;z-index:200;pointer-events:none;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.3s;}
+.celebration.show{opacity:1;}
+.cel-text{
+  font-family:'Cinzel Decorative','Cinzel',serif;font-weight:900;
+  font-size:clamp(48px,12vw,130px);letter-spacing:8px;
+  color:var(--gold-bright);
+  text-shadow:0 0 30px var(--red-imperial),0 0 60px var(--gold),6px 6px 0 var(--red-dark);
+  transform:scale(0.3);animation:celPop 0.6s cubic-bezier(0.175,0.885,0.32,1.275) 0.1s forwards;
+}
+@keyframes celPop{from{transform:scale(0.3) rotate(-8deg);}to{transform:scale(1) rotate(0deg);}}
+.confetti-piece{
+  position:absolute;width:9px;height:12px;top:-20px;
+  animation:confettiFall linear forwards;border-radius:2px;
+}
+@keyframes confettiFall{from{transform:translateY(0) rotateZ(0deg);opacity:1;}to{transform:translateY(110vh) rotateZ(780deg);opacity:0;}}
+
+/* ── COIN RAIN OVERLAY ──────────────────────────────────────────
+   Full-screen overlay for coin/star particles on wins.
+   Coins can fall straight down (coinFall) or shoot from
+   left/right sides (coinShootLeft/Right).
+
+   - Created dynamically in JS rainCoins() function.
+   - Each .coin-piece is an emoji (🪙💰⭐✨💫🏅).
+   - Removed individually after their animation ends.
+   ─────────────────────────────────────────────────────────────── */
+.coin-overlay{
+  position:fixed;inset:0;z-index:150;pointer-events:none;overflow:hidden;
+}
+.coin-piece{
+  position:absolute;font-size:22px;line-height:1;
+  pointer-events:none;
+}
+@keyframes coinFall{
+  0%{transform:translateY(0) rotateZ(0deg);opacity:1;}
+  100%{transform:translateY(115vh) rotateZ(720deg);opacity:0;}
+}
+@keyframes coinShootLeft{
+  0%{transform:translate(0,0) rotateZ(0deg);opacity:1;}
+  100%{transform:translate(-80vw,25vh) rotateZ(-540deg);opacity:0;}
+}
+@keyframes coinShootRight{
+  0%{transform:translate(0,0) rotateZ(0deg);opacity:1;}
+  100%{transform:translate(80vw,25vh) rotateZ(540deg);opacity:0;}
+}
+
+/* ── MODAL OVERLAY ──────────────────────────────────────────────
+   Shared modal system for Info, Leaderboard, and Theme modals.
+
+   - .modal-overlay: Full-screen dark backdrop (88% opacity black).
+     Hidden by default (display:none), shown with .open class.
+   - .modal-box: Centered content card with dark gradient background,
+     gold border, max 620px wide, scrollable if content overflows.
+   - .modal-close: Red circular X button at top-right with
+     rotate-on-hover effect.
+   - Headings (h2, h3) use Cinzel fonts with gold styling.
+   - .sym-grid / .sym-row: Grid layout for symbol guide cards.
+
+   To customize: adjust modal max-width (620px), border radius (18px),
+   background gradient, or heading styles.
+   ─────────────────────────────────────────────────────────────── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:500;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.open{display:flex;}
+.modal-box{
+  background:linear-gradient(180deg,var(--red-lacquer),var(--black-lacquer));
+  border:4px solid var(--gold);border-radius:18px;
+  padding:24px;max-width:620px;width:100%;max-height:88vh;overflow-y:auto;
+  position:relative;
+  box-shadow:inset 0 0 0 1px var(--gold-bright),0 0 50px rgba(255,215,0,0.35),0 20px 60px rgba(0,0,0,0.85);
+}
+.modal-box h2{
+  font-family:'Cinzel Decorative','Cinzel',serif;font-weight:900;
+  font-size:2rem;letter-spacing:4px;color:var(--gold-bright);
+  text-align:center;margin-bottom:16px;
+  text-shadow:0 0 10px var(--gold),0 2px 3px rgba(0,0,0,0.7);
+}
+.modal-box h3{
+  font-family:'Cinzel',serif;font-weight:700;
+  font-size:0.9rem;letter-spacing:3px;text-transform:uppercase;
+  color:var(--gold);margin:14px 0 6px;
+  border-bottom:1px solid var(--gold-deep);padding-bottom:4px;
+}
+.modal-box p,.modal-box li{font-size:13px;line-height:1.65;color:var(--text-main);margin-bottom:3px;}
+.modal-box ul{padding-left:18px;}
+.sym-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:7px;margin-top:6px;}
+.sym-row{background:rgba(0,0,0,0.4);border:1.5px solid var(--gold-deep);border-radius:8px;padding:8px 10px;display:flex;align-items:center;gap:8px;}
+.sym-glyph{font-size:1.8rem;filter:drop-shadow(0 0 4px var(--gold));}
+.sym-name{color:var(--gold-bright);font-family:'Cinzel',serif;font-size:11px;font-weight:700;}
+.sym-desc{color:var(--text-sub);font-size:10px;}
+.modal-close{
+  position:absolute;top:12px;right:14px;
+  background:linear-gradient(180deg,var(--red-bright),var(--red-deep));
+  border:2px solid var(--gold);color:var(--gold-bright);
+  font-size:18px;width:34px;height:34px;border-radius:50%;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:all 0.2s;
+  box-shadow:inset 0 0 0 1px var(--gold-bright);
+}
+.modal-close:hover{transform:rotate(90deg);box-shadow:inset 0 0 0 1px var(--gold-bright),0 0 14px var(--gold);}
+
+/* ── LEADERBOARD ────────────────────────────────────────────────
+   Leaderboard modal content — shows ranked player list.
+   - .lb-row: 4-column grid (rank, avatar, name, score).
+   - .lb-header: Column header row with gold background.
+   - .lb-entry: Individual player row with hover highlight.
+   - .lb-entry.is-user: Highlighted row for the current player.
+   - .lb-rank: Rank number with gold/silver/bronze coloring.
+   - .lb-score: Right-aligned gold score number.
+   ─────────────────────────────────────────────────────────────── */
+.lb-row{
+  display:grid;grid-template-columns:44px 36px 1fr auto;
+  align-items:center;gap:8px;padding:8px 10px;
+  border-radius:8px;margin-bottom:4px;
+}
+.lb-header{
+  background:rgba(255,215,0,0.1);border:1px solid var(--gold-deep);
+  font-family:'Cinzel',serif;font-weight:900;font-size:9px;letter-spacing:2px;
+  color:var(--gold-bright);text-transform:uppercase;margin-bottom:6px;
+}
+.lb-entry{
+  background:rgba(0,0,0,0.35);border:1px solid rgba(201,162,39,0.3);
+  transition:background 0.2s;
+}
+.lb-entry:hover{background:rgba(255,215,0,0.06);}
+.lb-entry.is-user{
+  background:linear-gradient(90deg,rgba(255,215,0,0.15),rgba(200,16,46,0.15));
+  border-color:var(--gold);
+  box-shadow:0 0 14px rgba(255,215,0,0.3);
+}
+.lb-rank{
+  font-family:'Cinzel',serif;font-weight:900;font-size:15px;
+  color:var(--gold-bright);text-align:center;
+}
+.lb-rank.gold{color:#FFD700;text-shadow:0 0 10px var(--gold),0 0 20px var(--gold);}
+.lb-rank.silver{color:#C0C0C0;text-shadow:0 0 6px rgba(192,192,192,0.6);}
+.lb-rank.bronze{color:#CD7F32;text-shadow:0 0 6px rgba(205,127,50,0.6);}
+.lb-avatar{font-size:20px;text-align:center;}
+.lb-name{
+  font-family:'Cinzel',serif;font-weight:700;font-size:11px;
+  color:var(--text-main);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  display:flex;align-items:center;gap:5px;
+}
+.lb-you{
+  font-size:8px;letter-spacing:1px;color:var(--gold-deep);
+  background:rgba(255,215,0,0.15);border:1px solid var(--gold-deep);
+  border-radius:4px;padding:1px 4px;flex-shrink:0;
+}
+.lb-score{
+  font-family:'Cinzel',serif;font-weight:900;font-size:12px;
+  color:var(--gold-bright);text-align:right;white-space:nowrap;
+  text-shadow:0 0 8px rgba(255,215,0,0.5);
+}
+
+/* ── TOP CONTROL BAR ────────────────────────────────────────────
+   Fixed position buttons at top-right: Leaderboard, Themes, Info, Mute.
+   Hidden on mobile (<600px) — mobile equivalents appear in settings-row.
+
+   - .ctrl-btn: 38px circular gold gradient button.
+   - :hover scales up 10% with enhanced glow.
+   - .is-muted: Adds a red diagonal line through the icon (for mute state).
+
+   To customize: adjust button size (38px), position (top:22px right:18px),
+   gap between buttons (12px), or add new buttons.
+   ─────────────────────────────────────────────────────────────── */
+.top-ctrl-bar{
+  position:fixed;top:22px;right:18px;z-index:100;
+  display:flex;gap:12px;
+}
+.ctrl-btn{
+  width:38px;height:38px;border-radius:50%;
+  border:2px solid var(--gold);
+  background:linear-gradient(180deg,var(--gold),var(--gold-deep));
+  color:var(--red-dark);font-size:18px;font-weight:900;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all 0.2s;
+  box-shadow:inset 0 0 0 1px var(--gold-bright),0 0 12px rgba(255,215,0,0.4),0 4px 10px rgba(0,0,0,0.5);
+  text-shadow:0 1px 0 rgba(255,244,176,0.6);
+  font-family:'Cinzel',serif;
+  position:relative;
+}
+.ctrl-btn:hover{
+  box-shadow:inset 0 0 0 1px var(--gold-bright),0 0 20px var(--gold),0 4px 14px rgba(0,0,0,0.6);
+  transform:scale(1.1);
+}
+/* Muted state — red diagonal line through the icon */
+.ctrl-btn.is-muted .icon{position:relative;}
+.ctrl-btn.is-muted .icon::after{
+  content:'';
+  position:absolute;top:50%;left:50%;
+  width:2px;height:140%;
+  background:red;
+  transform:translate(-50%,-50%) rotate(45deg);
+  border-radius:1px;
+}
+
+/* ── SETTINGS POPOVER (v18) ─────────────────────────────────────
+   Triggered by the ⚙ button in the top-ctrl-bar. Contains the
+   Music / Sound / Stop-on-Big-Win toggles previously in the
+   bottom .settings-row. Toggle IDs unchanged so existing JS
+   wiring (tgMusic, tgSound, tgStop) still works.
+   ─────────────────────────────────────────────────────────────── */
+.settings-wrap{position:relative;}
+.settings-popover{
+  position:absolute;top:calc(100% + 10px);right:0;
+  min-width:200px;z-index:200;
+  background:linear-gradient(180deg,var(--red-lacquer),var(--black-lacquer));
+  border:2px solid var(--gold);border-radius:12px;
+  padding:12px 14px;
+  display:none;flex-direction:column;gap:10px;
+  box-shadow:
+    inset 0 0 0 1px var(--gold-bright),
+    0 12px 30px rgba(0,0,0,0.7),
+    0 0 22px rgba(255,215,0,0.25);
+}
+.settings-popover.open{display:flex;animation:settingsFade 0.18s ease-out;}
+@keyframes settingsFade{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+.settings-popover-title{
+  font-family:'Cinzel',serif;font-weight:900;font-size:11px;letter-spacing:3px;
+  color:var(--gold-bright);text-transform:uppercase;text-align:center;
+  padding-bottom:6px;border-bottom:1px solid var(--gold-deep);
+}
+.settings-popover .toggle-wrap{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  font-family:'Cinzel',serif;font-weight:700;font-size:10px;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--gold-bright);
+}
+
+/* ── SETTINGS ROW ───────────────────────────────────────────────
+   Bottom bar with toggle switches: Music, Sound, Stop on Big Win.
+   Also contains mobile-only buttons (settings-btn-group) that
+   replace the hidden top-ctrl-bar on small screens.
+
+   - .toggle-wrap: Label + toggle pill pair.
+   - .toggle-pill: Sliding switch (46×22px).
+     Default: dim; .on class: gradient from red-bright → gold.
+   - .toggle-pill::after: The sliding knob (14px circle).
+
+   To customize: adjust pill width (46px), knob size (14px),
+   on-state gradient colors, or add new toggles.
+   ─────────────────────────────────────────────────────────────── */
+/* v18: toggles moved to the top-right settings popover. On desktop the row
+   is empty so we hide it entirely. It re-appears on mobile (<600px) via
+   the existing media query below, where it hosts compact ctrl buttons. */
+.settings-row{display:none;}
+@media(max-width:599px){
+  .settings-row{
+    width:100%;max-width:840px;
+    display:flex;gap:14px;flex-wrap:wrap;justify-content:center;align-items:center;
+    background:linear-gradient(180deg,var(--black-lacquer),var(--red-dark));
+    border:2px solid var(--gold);border-radius:12px;padding:5px 14px;flex-shrink:0;
+    box-shadow:inset 0 0 0 1px var(--gold-bright),inset 0 0 15px rgba(0,0,0,0.6);
+  }
+}
+.toggle-wrap{display:flex;align-items:center;gap:8px;font-family:'Cinzel',serif;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--gold-bright);}
+.toggle-pill{
+  position:relative;width:46px;height:22px;
+  background:rgba(255,244,176,0.12);
+  border:2px solid var(--gold-deep);border-radius:999px;cursor:pointer;transition:background 0.25s;
+}
+.toggle-pill.on{background:linear-gradient(90deg,var(--red-bright),var(--gold));border-color:var(--gold);}
+.toggle-pill::after{content:'';position:absolute;top:1px;left:1px;width:14px;height:14px;border-radius:50%;background:var(--gold-bright);transition:left 0.25s ease;box-shadow:0 1px 3px rgba(0,0,0,0.6);}
+.toggle-pill.on::after{left:27px;background:#FFF;}
+
+/* Mobile-only buttons inside settings-row — visible only <600px */
+.settings-btn-group{
+  display:none;
+  align-items:center;gap:8px;
+  border-left:1px solid var(--gold-deep);
+  padding-left:14px;
+}
+.ctrl-btn-sm{
+  width:32px;height:32px;border-radius:50%;
+  border:2px solid var(--gold);
+  background:linear-gradient(180deg,var(--gold),var(--gold-deep));
+  color:var(--red-dark);font-size:14px;font-weight:900;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all 0.2s;
+  box-shadow:inset 0 0 0 1px var(--gold-bright),0 0 8px rgba(255,215,0,0.35);
+  font-family:'Cinzel',serif;
+  position:relative;
+}
+.ctrl-btn-sm:hover{transform:scale(1.1);box-shadow:inset 0 0 0 1px var(--gold-bright),0 0 16px var(--gold);}
+.ctrl-btn-sm .icon{position:relative;}
+.ctrl-btn-sm.is-muted .icon::after{
+  content:'';position:absolute;top:50%;left:50%;
+  width:2px;height:140%;background:red;
+  transform:translate(-50%,-50%) rotate(45deg);border-radius:1px;
+}
+
+/* Footer disclaimer text */
+.footer-note{font-size:9px;color:var(--text-sub);text-align:center;padding:1px 0;letter-spacing:2px;flex-shrink:0;font-family:'Cinzel',serif;}
+
+/* ── DENOMINATION STRIP ─────────────────────────────────────────
+   Bottom info strip showing per-spin cost, active lines, and RTP.
+   Purely informational — styled as a thin gold-bordered divider.
+
+   To customize: adjust font-size (10px), letter-spacing (3px),
+   or change the displayed values in HTML.
+   ─────────────────────────────────────────────────────────────── */
+.deno-strip{
+  margin-top:6px;padding:4px 0;
+  border-top:1px solid var(--gold-deep);
+  font-family:'Cinzel',serif;font-weight:700;
+  font-size:10px;letter-spacing:3px;
+  color:var(--gold-bright);
+  text-align:center;
+  text-shadow:0 1px 2px rgba(0,0,0,0.7);
+  text-transform:uppercase;
+}
+.deno-strip .sep{color:var(--gold-deep);margin:0 6px;}
+
+/* ── THEME SELECTOR MODAL (NEW in v16) ──────────────────────────
+   Modal overlay for choosing visual themes. Displays a grid of
+   theme preview cards, each showing:
+   - Theme icon and name
+   - Color swatch preview (3 accent colors)
+   - Status badge: ACTIVE / SELECT / 🔒 LOCKED
+   - Unlock hint for locked themes
+
+   Theme cards respond to hover with glow + lift effect.
+   Locked cards are dimmed and show unlock requirements.
+
+   To customize: adjust grid column min-width (160px),
+   card padding, swatch colors, or add new theme entries.
+   ─────────────────────────────────────────────────────────────── */
+.theme-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:10px;margin-top:12px;
+}
+.theme-card{
+  position:relative;
+  background:rgba(0,0,0,0.4);
+  border:2px solid var(--gold-deep);
+  border-radius:12px;padding:14px 10px;
+  cursor:pointer;transition:all 0.25s;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+}
+.theme-card:hover:not(.locked){
+  border-color:var(--gold);
+  box-shadow:0 0 16px rgba(255,215,0,0.35);
+  transform:translateY(-2px);
+}
+.theme-card.active{
+  border-color:var(--gold);
+  background:rgba(255,215,0,0.1);
+  box-shadow:0 0 20px rgba(255,215,0,0.4);
+}
+.theme-card.locked{opacity:0.55;cursor:not-allowed;}
+.theme-card.locked:hover{opacity:0.7;}
+/* Color swatch preview — 3 small circles showing theme palette */
+.theme-swatches{display:flex;gap:4px;margin-bottom:2px;}
+.theme-swatch{
+  width:22px;height:22px;border-radius:6px;
+  border:1.5px solid rgba(255,255,255,0.3);
+  box-shadow:inset 0 0 4px rgba(0,0,0,0.3);
+}
+.theme-icon{font-size:26px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.4));}
+.theme-name{
+  font-family:'Cinzel',serif;font-weight:700;
+  font-size:11px;letter-spacing:1px;
+  color:var(--gold-bright);text-align:center;
+}
+.theme-desc{font-size:9px;color:var(--text-sub);text-align:center;line-height:1.3;}
+.theme-status{
+  font-family:'Cinzel',serif;font-weight:700;
+  font-size:9px;letter-spacing:2px;
+  padding:3px 10px;border-radius:6px;text-transform:uppercase;
+}
+.theme-status.active-badge{
+  background:linear-gradient(180deg,var(--gold),var(--gold-deep));
+  color:var(--red-dark);
+}
+.theme-status.select-badge{
+  background:transparent;
+  border:1.5px solid var(--gold-deep);
+  color:var(--gold-bright);
+}
+.theme-status.locked-badge{
+  background:rgba(0,0,0,0.5);
+  border:1.5px solid rgba(255,255,255,0.2);
+  color:rgba(255,255,255,0.5);
+}
+.theme-unlock-hint{
+  font-size:8px;color:rgba(255,200,200,0.7);
+  text-align:center;font-style:italic;line-height:1.3;
+}
+/* Theme unlock toast notification — appears center-screen when
+   a locked theme is unlocked via gameplay achievement */
+.theme-unlock-toast{
+  position:fixed;top:50%;left:50%;
+  transform:translate(-50%,-50%) scale(0.5);
+  z-index:600;
+  background:linear-gradient(180deg,var(--red-lacquer),var(--black-lacquer));
+  border:3px solid var(--gold);border-radius:16px;
+  padding:24px 32px;text-align:center;
+  opacity:0;pointer-events:none;
+  transition:all 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+  box-shadow:0 0 40px rgba(255,215,0,0.4),0 20px 60px rgba(0,0,0,0.8);
+}
+.theme-unlock-toast.show{
+  opacity:1;
+  transform:translate(-50%,-50%) scale(1);
+  pointer-events:auto;
+}
+.theme-unlock-toast h3{
+  font-family:'Cinzel Decorative','Cinzel',serif;font-weight:900;
+  font-size:20px;color:var(--gold-bright);margin-bottom:8px;
+  text-shadow:0 0 10px var(--gold);
+}
+.theme-unlock-toast p{font-size:12px;color:var(--text-main);margin-bottom:4px;}
+
+/* ── RESPONSIVE BREAKPOINTS ─────────────────────────────────────
+   Mobile (<600px):
+   - Reduces --symbol-h to 68px for smaller reels.
+   - Stacks controls into single column.
+   - Spin column becomes horizontal row.
+   - Hides desktop top-ctrl-bar, shows mobile settings-btn-group.
+   - Reduces font sizes, button sizes, and spacing throughout.
+
+   Extra-narrow (<400px):
+   - Hides mascot lanterns entirely.
+   - Further reduces symbol height to 60px and title size.
+
+   To customize: adjust breakpoints (600px/400px), or add new
+   responsive rules for specific screen ranges.
+   ─────────────────────────────────────────────────────────────── */
+@media(max-width:600px){
+  :root{
+    --symbol-h:68px;
+  }
+  .app{padding:14px 8px 8px;gap:4px;}
+  .site-title{font-size:clamp(22px,7vw,36px);letter-spacing:5px;}
+  .mascot{width:38px;height:38px;font-size:20px;}
+  .controls{grid-template-columns:1fr;gap:6px;}
+  .spin-col{
+    flex-direction:row;flex-wrap:wrap;
+    align-items:center;justify-content:center;
+    gap:8px;
+  }
+  .spin-btn{width:90px;height:90px;font-size:44px;}
+  .jp-tier-val{font-size:clamp(10px,3.5vw,16px);}
+  .payline-col{width:16px;}
+  .payline-cell{font-size:10px;}
+  .balance-bar{gap:5px;}
+  .bal-value{font-size:clamp(13px,4vw,20px);}
+  .bet-panel{width:100%;}
+  .adj-btn{width:28px;height:28px;font-size:18px;}
+  #betInput{font-size:clamp(14px,4vw,20px);}
+  .qbet{font-size:9px;padding:3px 2px;}
+  .deno-strip{font-size:8px;letter-spacing:2px;}
+  .settings-row{padding:4px 10px;gap:8px;}
+  .toggle-pill{width:36px;height:18px;}
+  .toggle-pill::after{width:11px;height:11px;}
+  .toggle-pill.on::after{left:21px;}
+
+  /* Hide fixed top buttons, show mobile group in settings-row */
+  .top-ctrl-bar{display:none !important;}
+  .settings-btn-group{display:flex;}
+}
+
+/* Extra-narrow: hide mascots, further reduce sizes */
+@media(max-width:400px){
+  .mascot{display:none;}
+  .site-title{font-size:clamp(20px,8vw,30px);}
+  :root{--symbol-h:60px;}
+}
+
+/* ============================================================
+   v17 OVERRIDES — additive only, no structural rewrites
+   ============================================================ */
+
+/* Page never scrolls horizontally regardless of decorations */
+html,body{max-width:100%;overflow-x:hidden;}
+
+/* Cabinet hardening — defensive sizing so border-image outset and
+   box-shadow spreads can never push horizontal overflow */
+.cabinet{
+  box-sizing:border-box;
+  max-width:100%;
+  overflow:hidden;
+}
+.main-row{max-width:100%;min-width:0;}
+.main-row .cabinet{min-width:0;max-width:100%;}
+
+/* Jackpot tier cells — guarantee long values truncate, never widen */
+.jackpot-bar{max-width:100%;min-width:0;overflow:hidden;}
+.jp-tier{min-width:0;overflow:hidden;}
+.jp-tier-val{
+  min-width:0;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  display:block;
+}
+
+/* Reel symbol cells — pinned to --symbol-h across themes/viewports */
+.sym{
+  height:var(--symbol-h);
+  min-height:var(--symbol-h);
+  max-height:var(--symbol-h);
+  box-sizing:border-box;
+  overflow:hidden;
+}
+.reel{overflow:hidden;}
+
+/* ── Multiplier announcement banner (above reels) ── */
+.mult-banner{
+  position:absolute;
+  left:50%;
+  top:8px;
+  transform:translate(-50%,-12px) scale(0.85);
+  z-index:40;
+  pointer-events:none;
+  opacity:0;
+  font-family:'Cinzel Decorative',serif;
+  font-weight:900;
+  font-size:clamp(16px,3vw,26px);
+  letter-spacing:2px;
+  padding:8px 22px;
+  border-radius:14px;
+  color:var(--gold-bright,#FFF4B0);
+  background:linear-gradient(180deg,rgba(0,0,0,0.85),rgba(40,0,0,0.85));
+  border:2px solid var(--gold,#FFD700);
+  box-shadow:0 0 24px rgba(255,215,0,0.7),inset 0 0 12px rgba(255,244,176,0.4);
+  text-shadow:0 0 8px rgba(255,215,0,0.9);
+  white-space:nowrap;
+  transition:opacity .25s ease,transform .25s ease;
+}
+.mult-banner.show{
+  opacity:1;
+  transform:translate(-50%,0) scale(1);
+  animation:multBannerPulse 1.2s ease-in-out infinite;
+}
+@keyframes multBannerPulse{
+  0%,100%{box-shadow:0 0 24px rgba(255,215,0,0.7),inset 0 0 12px rgba(255,244,176,0.4);}
+  50%{box-shadow:0 0 38px rgba(255,215,0,1),inset 0 0 18px rgba(255,244,176,0.7);}
+}
+.reels-wrap{position:relative;}
+
+/* ── Multiplier badge on spin button ── */
+.spin-btn{position:relative;}
+.mult-badge{
+  position:absolute;
+  top:-6px;
+  right:-6px;
+  min-width:34px;
+  height:24px;
+  padding:0 8px;
+  border-radius:12px;
+  background:linear-gradient(180deg,var(--gold-bright,#FFF4B0),var(--gold,#FFD700));
+  color:#3a1a00;
+  font-family:'Cinzel',serif;
+  font-weight:900;
+  font-size:13px;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  border:2px solid var(--gold-shadow,#7A5C00);
+  box-shadow:0 2px 6px rgba(0,0,0,0.6),0 0 12px rgba(255,215,0,0.8);
+  z-index:5;
+  pointer-events:none;
+}
+.mult-badge.active{display:flex;animation:multBadgePulse 0.9s ease-in-out infinite;}
+@keyframes multBadgePulse{
+  0%,100%{transform:scale(1);}
+  50%{transform:scale(1.12);}
+}
+
+/* ── Soft "Hang in there..." overlay (auto-spin loss softening) ── */
+.soft-overlay{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%) scale(0.9);
+  z-index:45;
+  pointer-events:none;
+  opacity:0;
+  padding:14px 26px;
+  border-radius:14px;
+  background:linear-gradient(180deg,rgba(20,0,0,0.92),rgba(60,10,10,0.92));
+  border:2px solid var(--gold-deep,#C9A227);
+  color:var(--text-main,#FFF4D6);
+  font-family:'Cinzel',serif;
+  font-weight:700;
+  font-size:clamp(14px,2.4vw,20px);
+  letter-spacing:1px;
+  text-align:center;
+  box-shadow:0 6px 24px rgba(0,0,0,0.7);
+  transition:opacity .35s ease,transform .35s ease;
+  white-space:nowrap;
+}
+.soft-overlay.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
+
+/* ── Cabinet dim + balance pulse for 5+ loss streak ── */
+.cabinet.cabinet-dimmed{filter:brightness(0.85);transition:filter .6s ease;}
+.cabinet{transition:filter .6s ease;}
+.bal-card.bal-attention-pulse{
+  animation:balAttentionPulse 1.6s ease-in-out infinite;
+}
+@keyframes balAttentionPulse{
+  0%,100%{box-shadow:0 0 0 rgba(255,215,0,0);transform:scale(1);}
+  50%{box-shadow:0 0 18px rgba(255,215,0,0.55);transform:scale(1.03);}
+}
+
+/* ── Phone-fitting (≤480px): bet panel matches balance bar width;
+      bet adjust buttons shrink/wrap; spin button centered;
+      vertical compaction so 375px/414px screens fit 100vh ── */
+@media(max-width:480px){
+  .controls{
+    grid-template-columns:1fr !important;
+    gap:6px !important;
+    width:100%;
+    min-width:0;
+  }
+  .bet-panel{
+    width:100% !important;
+    box-sizing:border-box;
+    min-width:0;
+    max-width:100%;
+    overflow:hidden;
+    padding:6px 8px;
+  }
+  .bet-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:4px;
+    min-width:0;
+  }
+  .bet-row #betInput{
+    flex:1 1 60px;
+    min-width:0;
+    width:auto;
+  }
+  .adj-btn{
+    flex:0 1 auto;
+    min-width:0;
+    flex-shrink:1;
+  }
+  .quick-bets{
+    display:flex;
+    flex-wrap:wrap;
+    gap:4px;
+    min-width:0;
+  }
+  .qbet{flex:1 1 22%;min-width:0;}
+  .spin-col{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    margin:0 auto;
+    width:100%;
+  }
+  .spin-btn{margin:0 auto;}
+  /* Vertical compaction for 375/414px-tall screens */
+  .cabinet{padding:6px 8px;}
+  .balance-bar{gap:4px;margin-top:4px;}
+  .bal-card,.free-spin-pill{padding:4px 6px;}
+  .deno-strip{font-size:9px;padding:2px 4px;margin-top:2px;}
+  .win-banner{padding:4px 6px;font-size:11px;}
+  .mult-banner{font-size:14px;padding:5px 14px;letter-spacing:1px;top:4px;}
+  .soft-overlay{padding:10px 18px;font-size:13px;}
+  .mult-badge{min-width:28px;height:20px;font-size:11px;padding:0 6px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ── BACKGROUND LAYER ─────────────────────────────────────────
+     Three-layer decorative background:
+     1. bg-wrap: Full-screen radial gradient (dark center glow).
+     2. bg-stars: Repeating SVG geometric pattern overlay.
+     3. bg-glow-left/right: Animated radial glow orbs for ambiance.
+     All at z-index:0, behind all interactive content.
+     ──────────────────────────────────────────────────────────── -->
+<div class="bg-wrap">
+  <div class="bg-stars"></div>
+  <div class="bg-glow-left"></div>
+  <div class="bg-glow-right"></div>
+</div>
+
+<!-- ── MARQUEE LIGHT STRIPS ─────────────────────────────────────
+     Top and bottom light strips with animated bulbs.
+     Bulbs are generated dynamically by JS (buildMarquee function).
+     Count = viewport width ÷ 14px per bulb.
+     ──────────────────────────────────────────────────────────── -->
+<div class="marquee-top" id="marqTop"></div>
+<div class="marquee-bottom" id="marqBot"></div>
+
+<!-- ── FIXED TOP-RIGHT CONTROLS ─────────────────────────────────
+     Desktop-only buttons (hidden on mobile <600px):
+     - 🏆 Leaderboard modal
+     - 🎨 Theme selector modal (NEW in v16)
+     - i  How to Play info modal
+     - 🔊 Master mute toggle
+     ──────────────────────────────────────────────────────────── -->
+<div class="top-ctrl-bar">
+  <button id="compBtn" class="ctrl-btn" aria-label="Leaderboard">🏆</button>
+  <button id="themeBtn" class="ctrl-btn" aria-label="Themes">🎨</button>
+  <button id="infoBtn" class="ctrl-btn" aria-label="How to Play">i</button>
+  <button id="muteBtn" class="ctrl-btn" aria-label="Toggle Mute"><span class="icon">🔊</span></button>
+  <!-- v18: settings gear — opens a popover containing the music/sound/stop-on-big-win toggles
+       that previously lived in the bottom .settings-row. -->
+  <div class="settings-wrap">
+    <button id="settingsBtn" class="ctrl-btn" aria-label="Settings" aria-expanded="false">⚙</button>
+    <div class="settings-popover" id="settingsPopover" role="menu" aria-hidden="true">
+      <div class="settings-popover-title">Settings</div>
+      <div class="toggle-wrap">
+        <span>Music</span>
+        <div class="toggle-pill on" id="tgMusic"></div>
+      </div>
+      <div class="toggle-wrap">
+        <span>Sound</span>
+        <div class="toggle-pill on" id="tgSound"></div>
+      </div>
+      <div class="toggle-wrap">
+        <span>Stop on Big Win</span>
+        <div class="toggle-pill on" id="tgStop"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+
+  <!-- ── SITE HEADER ──────────────────────────────────────────
+       Casino logo with animated lantern mascots on each side.
+       Mascots bob vertically; they shake on win events.
+       Title uses gold gradient text via background-clip.
+       ─────────────────────────────────────────────────────── -->
+  <header class="site-header">
+    <div class="header-badge">
+      <div class="mascot left" aria-hidden="true">🏮</div>
+      <div class="site-title">SPINFIRE</div>
+      <div class="mascot right" aria-hidden="true">🏮</div>
+    </div>
+    <div class="site-sub">IMPERIAL · FORTUNE · SLOTS</div>
+  </header>
+
+  <!-- ── MAIN ROW: CABINET + JACKPOT TIERS ────────────────────
+       On mobile: column-reverse (jackpot above cabinet).
+       On desktop (>1040px): side-by-side row layout.
+       ─────────────────────────────────────────────────────── -->
+  <div class="main-row">
+
+    <!-- ── SLOT MACHINE CABINET ─────────────────────────────
+         The main machine housing. Contains:
+         - Reel area with 5 reel columns
+         - Win banner status bar
+         - Balance display plaques
+         - Bet controls and spin button
+         - Denomination info strip
+         ──────────────────────────────────────────────────── -->
+    <div class="cabinet">
+      <!-- Reels area — contains payline indicators, 5 reel columns,
+           payline overlay, multiplier popup, and side deco bulbs.
+           The 5 .reel elements are injected by JS (buildReels IIFE). -->
+      <div class="reels-wrap" id="reelsWrap">
+        <!-- v17: Multiplier announcement banner — shown briefly above reels
+             before a multiplier spin starts. JS toggles .show class. -->
+        <div class="mult-banner" id="multBanner" aria-hidden="true"></div>
+        <!-- v17: Soft "Hang in there..." overlay — shown after 3 consecutive
+             auto-spin losses before resuming. JS toggles .show class. -->
+        <div class="soft-overlay" id="softOverlay" aria-hidden="true">Hang in there&hellip;</div>
+        <div class="reel-deco" id="decL">
+          <div class="deco-bulb"></div><div class="deco-bulb"></div>
+          <div class="deco-bulb"></div><div class="deco-bulb"></div>
+          <div class="deco-bulb"></div><div class="deco-bulb"></div>
+        </div>
+        <div class="payline-col left">
+          <div class="payline-cell">1</div>
+          <div class="payline-cell">2</div>
+          <div class="payline-cell">3</div>
+        </div>
+        <!-- 5 reels injected by JS before #payline -->
+        <div class="payline-mid" id="payline"></div>
+        <div class="payline-col right">
+          <div class="payline-cell">1</div>
+          <div class="payline-cell">2</div>
+          <div class="payline-cell">3</div>
+        </div>
+        <div class="mult-pop" id="multPop"></div>
+        <div class="reel-deco right" id="decR">
+          <div class="deco-bulb"></div><div class="deco-bulb"></div>
+          <div class="deco-bulb"></div><div class="deco-bulb"></div>
+          <div class="deco-bulb"></div><div class="deco-bulb"></div>
+        </div>
+      </div>
+
+      <!-- Win Banner — shows spin result messages.
+           JS toggles className between: win-banner, win, loss, jackpot, countdown -->
+      <div class="win-banner" id="winBanner">Place your bet and SPIN to win your fortune!</div>
+
+      <!-- Balance plaques — three-column display:
+           Balance (credits), Free Spins count, Total Winnings -->
+      <div class="balance-bar">
+        <div class="bal-card">
+          <div class="bal-label">Balance</div>
+          <div class="bal-value" id="balVal">1,000</div>
+        </div>
+        <div class="free-spin-pill zero" id="fsPill">
+          <div class="bal-label">Free Spins</div>
+          <div class="bal-value" id="fsVal">0</div>
+        </div>
+        <div class="bal-card total-win">
+          <div class="bal-label">Total Winnings</div>
+          <div class="bal-value" id="totalWinVal">0</div>
+        </div>
+      </div>
+
+      <!-- Controls — bet panel (left) and spin column (right) -->
+      <div class="controls" id="ctrlWrap">
+
+        <!-- Bet Panel — bet adjustment (+/−), input, and quick presets -->
+        <div class="bet-panel">
+          <div class="panel-label">Your Bet</div>
+          <div class="bet-row">
+            <button class="adj-btn" id="betDown" aria-label="Decrease bet">−</button>
+            <input type="number" id="betInput" min="100" step="100" value="100"/>
+            <button class="adj-btn" id="betUp" aria-label="Increase bet">+</button>
+          </div>
+          <div class="quick-bets">
+            <button class="qbet" data-bet="100">100</button>
+            <button class="qbet" data-bet="200">200</button>
+            <button class="qbet" data-bet="500">500</button>
+            <button class="qbet" data-bet="max">MAX</button>
+          </div>
+          <div style="font-size:9px;color:var(--text-sub);text-align:center;">Min 100 · multiples of 100</div>
+        </div>
+
+        <!-- Spin Column — streak dots, spin button, auto-spin toggle -->
+        <div class="spin-col">
+          <div class="streak-bar" id="streakBar">
+            <div class="streak-dot" id="sd0"></div>
+            <div class="streak-dot" id="sd1"></div>
+            <div class="streak-dot" id="sd2"></div>
+            <div class="streak-dot" id="sd3"></div>
+            <div class="streak-dot" id="sd4"></div>
+          </div>
+          <button class="spin-btn" id="spinBtn" aria-label="Spin">↻<!-- v17: multiplier badge, toggled .active during a multiplier spin -->
+            <span class="mult-badge" id="multBadge" aria-hidden="true"></span>
+          </button>
+          <div class="spin-hint">Space = Spin</div>
+          <button class="auto-btn" id="autoBtn">AUTO-SPIN</button>
+        </div>
+
+      </div>
+
+      <!-- Denomination / lines / RTP info strip -->
+      <!-- v18: deno-strip removed per design feedback (× 0.02 / 3 LINES / RTP) -->
+    </div>
+
+    <!-- ── JACKPOT TIERS ──────────────────────────────────────
+         Four progressive jackpot tiers: GRAND, MAJOR, MINOR, MINI.
+         Values tick up via JS setInterval timers.
+         GRAND is the main progressive jackpot (starts at 50,000).
+         ─────────────────────────────────────────────────────── -->
+    <div class="jackpot-bar">
+      <div class="jp-tier grand">
+        <span class="jp-tier-label">GRAND</span>
+        <span class="jp-tier-val" id="jackpotVal">50,000</span>
+      </div>
+      <div class="jp-tier major">
+        <span class="jp-tier-label">MAJOR</span>
+        <span class="jp-tier-val" id="jpMajorVal">8,888</span>
+      </div>
+      <div class="jp-tier minor">
+        <span class="jp-tier-label">MINOR</span>
+        <span class="jp-tier-val" id="jpMinorVal">888</span>
+      </div>
+      <div class="jp-tier mini">
+        <span class="jp-tier-label">MINI</span>
+        <span class="jp-tier-val" id="jpMiniVal">88</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── SETTINGS ROW ───────────────────────────────────────────
+       Toggle switches for Music, Sound, and Stop on Big Win.
+       On mobile: also shows compact versions of top-ctrl-bar buttons.
+       ──────────────────────────────────────────────────────────── -->
+  <div class="settings-row">
+    <!-- v18: toggle switches (Music/Sound/Stop on Big Win) moved to the top-right
+         settings popover (⚙ button). The IDs tgMusic / tgSound / tgStop still exist
+         there and JS wiring is unchanged. This row now only hosts mobile ctrl buttons. -->
+    <!-- Mobile-only buttons: shown when top-ctrl-bar is hidden (<600px) -->
+    <div class="settings-btn-group" id="settingsBtnGroup">
+      <button id="compBtnMob" class="ctrl-btn-sm" aria-label="Leaderboard">🏆</button>
+      <button id="themeBtnMob" class="ctrl-btn-sm" aria-label="Themes">🎨</button>
+      <button id="infoBtnMob" class="ctrl-btn-sm" aria-label="How to Play" style="font-family:'Cinzel',serif;font-weight:900;font-size:15px;">i</button>
+      <button id="muteBtnMob" class="ctrl-btn-sm" aria-label="Toggle Mute"><span class="icon">🔊</span></button>
+    </div>
+  </div>
+
+  <div class="footer-note">For entertainment only · No real money · Spin responsibly</div>
+</div>
+
+<!-- Celebration overlay — full-screen text + confetti on big wins -->
+<div class="celebration" id="celebration"></div>
+
+<!-- Coin rain overlay — falling coin/star particles on wins -->
+<div class="coin-overlay" id="coinOverlay"></div>
+
+<!-- ── INFO MODAL ───────────────────────────────────────────────
+     How to Play guide with rules, symbol payouts, token info,
+     star multiplier details, and keyboard shortcuts.
+     Opened by info button (i), closed by X or backdrop click.
+     ──────────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box">
+    <button class="modal-close" id="closeModal">✕</button>
+    <h2>HOW TO PLAY</h2>
+    <h3>Basics</h3>
+    <ul>
+      <li>Start with <strong>1,000 credits</strong>. Minimum bet: <strong>100</strong> (multiples of 100 only).</li>
+      <li>Match symbols on the <strong>center payline</strong> across all 5 reels to win.</li>
+      <li>Top and bottom rows also pay at 50% rate (bonus paylines).</li>
+      <li>Need 3+ matching symbols from the left: 3=30%, 4=60%, 5=100% multiplier.</li>
+    </ul>
+    <h3>Total Winnings</h3>
+    <p>Tracks your cumulative session winnings. Keeps adding up across spins and only resets when a fresh session starts (after a credit refill).</p>
+    <h3>Credits &amp; Refill</h3>
+    <ul>
+      <li>Out of credits? Wait <strong>30 seconds</strong> for a free refill of 500 credits.</li>
+      <li>3-win streak → +2 Free Spins. 5-win streak → +1 Lucky Token.</li>
+      <li>Occasional consolation free spins on losses (8% chance).</li>
+    </ul>
+    <h3>Symbol Guide</h3>
+    <div class="sym-grid">
+      <div class="sym-row"><span class="sym-glyph">🍒</span><div><div class="sym-name">Cherry — 2×</div><div class="sym-desc">Common · Low payout</div></div></div>
+      <div class="sym-row"><span class="sym-glyph">🍋</span><div><div class="sym-name">Lemon — 3×</div><div class="sym-desc">Common · Low payout</div></div></div>
+      <div class="sym-row"><span class="sym-glyph">🔔</span><div><div class="sym-name">Bell — 5×</div><div class="sym-desc">Medium payout</div></div></div>
+      <div class="sym-row"><span class="sym-glyph">⭐</span><div><div class="sym-name">Star — 8×</div><div class="sym-desc">Star multiplier bonus</div></div></div>
+      <div class="sym-row"><span class="sym-glyph">7️⃣</span><div><div class="sym-name">Lucky 7 — 15×</div><div class="sym-desc">Rare · High payout</div></div></div>
+      <div class="sym-row"><span class="sym-glyph">🎰</span><div><div class="sym-name">BAR — 20×</div><div class="sym-desc">Very rare · Big payout</div></div></div>
+      <div class="sym-row"><span class="sym-glyph">💎</span><div><div class="sym-name">Diamond — JACKPOT</div><div class="sym-desc">5× = Progressive Jackpot!</div></div></div>
+      <div class="sym-row"><span class="sym-glyph">🎁</span><div><div class="sym-name">Gift — Free Spins</div><div class="sym-desc">3=+8, 4=+10, 5=+15</div></div></div>
+    </div>
+    <h3>Special Tokens</h3>
+    <ul>
+      <li><strong>🍀 Lucky</strong> — Biases reels toward high-value symbols; may force 3+ match.</li>
+      <li><strong>💎 Jackpot</strong> — Heavy diamond bias; tiny chance to force all-diamond line.</li>
+      <li><strong>✨ 2× Win</strong> — Doubles your payout on that spin.</li>
+    </ul>
+    <p>Tokens are consumed on use. Earn via win streaks.</p>
+    <h3>Star Multiplier &amp; Periodic Bonus</h3>
+    <p>2+ Stars on the payline multiply your payout by the star count. Every 7th spin randomly triggers a 2×, 3×, 5×, or 10× bonus multiplier.</p>
+    <h3>Progressive Jackpot</h3>
+    <p>Grows with every spin. Hit <strong>5 Diamonds on the center payline</strong> to claim it. Resets to 50,000 after a win.</p>
+    <h3>Keyboard</h3>
+    <p><strong>Space</strong> = Spin</p>
+  </div>
+</div>
+
+<!-- ── LEADERBOARD MODAL ────────────────────────────────────────
+     Shows ranked list of players by total winnings.
+     Mix of fake NPC players + the current user.
+     User's row is highlighted with .is-user class.
+     Updated each time the modal opens via buildLeaderboard().
+     ──────────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="lbOverlay">
+  <div class="modal-box">
+    <button class="modal-close" id="closeLb">✕</button>
+    <h2>🏆 LEADERBOARD</h2>
+    <p style="text-align:center;color:var(--text-sub);font-size:12px;margin-bottom:12px;letter-spacing:2px;font-family:'Cinzel',serif;">TOP PLAYERS · TOTAL WINNINGS</p>
+    <div class="lb-row lb-header">
+      <span>Rank</span><span></span><span>Player</span><span>Winnings</span>
+    </div>
+    <div id="lbList"></div>
+  </div>
+</div>
+
+<!-- ── THEME SELECTOR MODAL (NEW in v16) ────────────────────────
+     Grid of theme preview cards. Each card shows icon, name,
+     color swatches, and status (ACTIVE/SELECT/LOCKED).
+     Content is generated dynamically by JS (buildThemeModal).
+     ──────────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="themeOverlay">
+  <div class="modal-box">
+    <button class="modal-close" id="closeTheme">✕</button>
+    <h2>🎨 THEMES</h2>
+    <p style="text-align:center;color:var(--text-sub);font-size:12px;margin-bottom:8px;letter-spacing:2px;font-family:'Cinzel',serif;">CHOOSE YOUR STYLE</p>
+    <div class="theme-grid" id="themeGrid"></div>
+  </div>
+</div>
+
+<!-- Theme unlock toast notification — shown when a locked theme is unlocked -->
+<div class="theme-unlock-toast" id="themeUnlockToast">
+  <h3>🔓 THEME UNLOCKED!</h3>
+  <p id="themeUnlockName"></p>
+  <p style="font-size:10px;color:var(--text-sub);margin-top:4px;">Open the Theme selector to try it!</p>
+</div>
+
+<script>
+(()=>{
+"use strict";
+
+/* ================================================================
+   SPINFIRE CASINO — JavaScript (v16)
+
+   STRUCTURE:
+   1. Constants — reel config, symbol definitions, weighted pool
+   2. User Identity — random name/avatar for leaderboard
+   3. Game State (S) — all mutable game state in one object
+   4. DOM References (UI) — cached element references
+   5. Marquee Builder — generates light strip bulbs
+   6. Reel Builder — creates 5 reel columns in the DOM
+   7. Symbol Helpers — random symbol selection with bias options
+   8. Strip Management — build, normalize, place symbols on strips
+   9. Counter Animation — smooth number tick-up effect
+   10. Render — syncs all UI elements to current state
+   11. Bet Controls — bet adjustment, quick bets, input handling
+   12. Token System — special-use token activation
+   13. Toggle Switches — music, sound, stop-on-big-win
+   14. Modal System — info, leaderboard, theme modals
+   15. Audio System — Web Audio API sound effects + music
+   16. Win Effects — lantern shake, coin rain, celebrations
+   17. Roll Grid — generates spin result grids with token bias
+   18. Evaluate — calculates payouts from result grids
+   19. Highlight Winners — visual flash on winning symbols
+   20. Celebration — full-screen win/jackpot celebration overlay
+   21. Refill System — 30-second countdown when out of credits
+   22. Spin Function — main game loop orchestrating everything
+   23. Auto-Spin — continuous automatic spinning toggle
+   24. Resize Handler — recalculates layout on window resize
+   25. Persistence — localStorage save/load of game state
+   26. Jackpot Tickers — periodic value increments for tiers
+   27. Master Mute — global audio on/off toggle
+   28. THEME SYSTEM (NEW) — theme selection, persistence, unlocking
+   ================================================================ */
+
+// ── 1. CONSTANTS ──────────────────────────────────────────────
+// REEL_N: Number of reel columns (5 = standard slot machine).
+// STRIP_LEN: Total symbol cells per reel strip (50 gives enough
+//   scroll distance for realistic spin animation).
+// MIN_BET: Minimum allowed bet amount (100 credits).
+const REEL_N=5,STRIP_LEN=50,MIN_BET=100;
+
+/**
+ * getSymH() — Reads the current --symbol-h CSS variable value.
+ * Called on init and resize to handle responsive layout changes.
+ * @returns {number} Symbol height in pixels (default 88).
+ */
+function getSymH(){
+  return parseInt(getComputedStyle(document.documentElement).getPropertyValue("--symbol-h"))||88;
+}
+let SYM_H=getSymH();
+
+/**
+ * SYMBOLS — Master symbol definition array.
+ * Each entry defines:
+ *   id:  Unique identifier (used in data-id attributes and evaluation)
+ *   g:   Glyph/emoji displayed in the reel
+ *   v:   Base payout multiplier (0 = special, no direct payout)
+ *   w:   Weight in the random pool (higher = more common)
+ *
+ * Payout hierarchy (low → high):
+ *   cherry(2×) < lemon(3×) < bell(5×) < star(8×) < seven(15×) < bar(20×) < diamond(50×/jackpot)
+ *   gift = special (awards free spins instead of credits)
+ */
+const SYMBOLS=[
+  {id:"cherry",g:"🍒",v:2,w:28},{id:"lemon",g:"🍋",v:3,w:22},
+  {id:"bell",g:"🔔",v:5,w:16},{id:"star",g:"⭐",v:8,w:12},
+  {id:"seven",g:"7️⃣",v:15,w:7},{id:"bar",g:"🎰",v:20,w:5},
+  {id:"diamond",g:"💎",v:50,w:3},{id:"gift",g:"🎁",v:0,w:4},
+];
+
+/**
+ * POOL — Weighted random selection pool.
+ * Built by inserting each symbol 'w' times into the array.
+ * Total entries = sum of all weights (28+22+16+12+7+5+3+4 = 97).
+ * Random selection: POOL[Math.floor(Math.random() * POOL.length)]
+ */
+const POOL=[];SYMBOLS.forEach(s=>{for(let i=0;i<s.w;i++)POOL.push(s);});
+const DIAMOND=SYMBOLS.find(s=>s.id==="diamond");
+const GIFT=SYMBOLS.find(s=>s.id==="gift");
+
+// ── 2. USER IDENTITY ─────────────────────────────────────────
+// Random name and avatar assigned per session for leaderboard display.
+const USER_NAMES=["FortuneDragon","LuckyStar88","GoldMaster","ImperialFox","CrimsonLuck","JadeTiger","SilkRoader","PhoenixSpin"];
+const USER_AVATARS=["🐼","🦁","🐯","🦊","🐉","🦅","🎭","🦋","🐺","🦄"];
+const USER_NAME=USER_NAMES[Math.floor(Math.random()*USER_NAMES.length)];
+const USER_AVATAR=USER_AVATARS[Math.floor(Math.random()*USER_AVATARS.length)];
+
+/**
+ * FAKE_PLAYERS — Pre-defined NPC entries for the leaderboard.
+ * Sorted by score descending. User's entry is inserted dynamically.
+ */
+const FAKE_PLAYERS=[
+  {name:"ImperialSpinner",avatar:"👑",score:987432},
+  {name:"GoldenPhoenix",avatar:"🦅",score:654321},
+  {name:"DragonLord8",avatar:"🐲",score:543210},
+  {name:"LuckyKoi",avatar:"🐟",score:421087},
+  {name:"JadePrincess",avatar:"💎",score:389654},
+  {name:"WildTiger99",avatar:"🐯",score:312450},
+  {name:"RedLantern",avatar:"🏮",score:245789},
+  {name:"GoldRushKing",avatar:"🤴",score:198234},
+  {name:"SpinFire_VIP",avatar:"🔥",score:145678},
+  {name:"FortuneSeeker",avatar:"🎋",score:98765},
+];
+
+// ── 3. GAME STATE ─────────────────────────────────────────────
+/**
+ * S — Central game state object. All mutable state lives here.
+ * Saved to localStorage periodically (every 3s) and on beforeunload.
+ *
+ * Properties:
+ *   balance     {number} Current credit balance
+ *   bet         {number} Current bet amount (multiples of MIN_BET)
+ *   totalWin    {number} Cumulative session winnings
+ *   freeSpins   {number} Remaining free spin count
+ *   streak      {number} Consecutive wins (resets on loss)
+ *   jackpot     {number} Current progressive jackpot value
+ *   spinning    {boolean} True while a spin animation is active
+ *   autoSpin    {boolean} True when auto-spin mode is enabled
+ *   music       {boolean} Background music on/off
+ *   sound       {boolean} Sound effects on/off
+ *   stopBig     {boolean} Stop auto-spin on big wins
+ *   activeToken {string|null} Currently selected token type
+ *   tokens      {object} Token inventory {luck, jackpot, double}
+ *   spinCount   {number} Total spins this session (for periodic bonus)
+ *   refilling   {boolean} True during 30-second refill countdown
+ */
+const S={
+  balance:1000,bet:100,totalWin:0,freeSpins:0,streak:0,
+  jackpot:50000,spinning:false,autoSpin:false,
+  music:true,sound:true,stopBig:true,
+  activeToken:null,tokens:{luck:2,jackpot:1,double:1},
+  spinCount:0,refilling:false,
+  // v17 additions:
+  autoLossStreak:0, // consecutive losses during auto-spin (reset on win or auto-off)
+  lastGrid:null,    // cached final reel grid for resize/theme re-apply
+};
+
+// ── 4. DOM REFERENCES ─────────────────────────────────────────
+/**
+ * UI — Cached DOM element references for all interactive elements.
+ * Using getElementById for fast lookup. Elements that may not exist
+ * in the DOM use ||null fallback.
+ */
+const $=id=>document.getElementById(id);
+const UI={
+  bal:$("balVal"),totalWin:$("totalWinVal"),fs:$("fsVal"),jp:$("jackpotVal"),
+  fsPill:$("fsPill"),betInput:$("betInput"),betUp:$("betUp"),betDown:$("betDown"),
+  spinBtn:$("spinBtn"),autoBtn:$("autoBtn"),
+  banner:$("winBanner"),payline:$("payline"),multPop:$("multPop"),
+  // v17 element refs:
+  multBanner:$("multBanner"),multBadge:$("multBadge"),softOverlay:$("softOverlay"),
+  cabinet:document.querySelector(".cabinet"),balCard:document.querySelector(".bal-card"),
+  tgMusic:$("tgMusic"),tgSound:$("tgSound"),tgStop:$("tgStop"),
+  cel:$("celebration"),overlay:$("modalOverlay"),
+  infoBtn:$("infoBtn"),closeModal:$("closeModal"),
+  tokLuck:$("tokLuck")||null,tokJp:$("tokJp")||null,tokDbl:$("tokDbl")||null,
+  tcLuck:$("tcLuck")||null,tcJp:$("tcJp")||null,tcDbl:$("tcDbl")||null,
+  streakDots:[0,1,2,3,4].map(i=>$("sd"+i)),
+  strips:[],reelEls:[],reelsWrap:$("reelsWrap"),
+  coinOverlay:$("coinOverlay"),
+};
+
+/** currentLanding — Tracks the current strip index position for each reel.
+ * Used to know which symbols are currently visible in the window. */
+const currentLanding=new Array(REEL_N).fill(1);
+
+/** flickerIvs — Stores setInterval IDs for each reel's flicker animation.
+ * Cleared when the reel stops spinning. */
+const flickerIvs=new Array(REEL_N).fill(null);
+
+// ── 5. MARQUEE BUILDER ───────────────────────────────────────
+/**
+ * buildMarquee(el, n) — Populates a marquee strip with n animated bulb divs.
+ * Each bulb gets a staggered animation-delay for the chase-light effect.
+ *
+ * @param {HTMLElement} el - The marquee container element
+ * @param {number} n - Number of bulbs to create
+ */
+function buildMarquee(el,n){
+  for(let i=0;i<n;i++){
+    const b=document.createElement("div");
+    b.className="marquee-bulb";
+    b.style.animationDelay=`${(i*0.12).toFixed(2)}s`;
+    el.appendChild(b);
+  }
+}
+buildMarquee($("marqTop"),Math.ceil(window.innerWidth/14));
+buildMarquee($("marqBot"),Math.ceil(window.innerWidth/14));
+
+// ── 6. REEL BUILDER ──────────────────────────────────────────
+/**
+ * Build 5 reel columns and insert them into the reels-wrap container.
+ * Each reel contains a .strip child that holds the vertical column of symbols.
+ * Reels are inserted before the #payline element to maintain correct DOM order.
+ */
+(()=>{
+  const wrap=UI.reelsWrap;
+  const paylineEl=UI.payline;
+  for(let r=0;r<REEL_N;r++){
+    const reel=document.createElement("div");
+    reel.className="reel";reel.id="reel"+r;
+    const strip=document.createElement("div");
+    strip.className="strip";strip.id="strip"+r;
+    reel.appendChild(strip);
+    wrap.insertBefore(reel,paylineEl);
+    UI.strips.push(strip);
+    UI.reelEls.push(reel);
+  }
+})();
+
+// ── 7. SYMBOL HELPERS ────────────────────────────────────────
+/**
+ * rndSym(lucky) — Returns a random symbol from the weighted pool.
+ * If lucky=true, 35% chance to pick from high-value symbols (v>=8, excluding gift).
+ *
+ * @param {boolean} lucky - Whether to bias toward high-value symbols
+ * @returns {object} Symbol object {id, g, v, w}
+ */
+function rndSym(lucky=false){
+  if(lucky&&Math.random()<0.35){
+    const hi=SYMBOLS.filter(s=>s.v>=8&&s.id!=="gift");
+    return hi[Math.floor(Math.random()*hi.length)];
+  }
+  return POOL[Math.floor(Math.random()*POOL.length)];
+}
+
+/**
+ * rndJpSym() — Returns a symbol biased toward diamonds (45% chance).
+ * Used when the jackpot token is active.
+ */
+function rndJpSym(){return Math.random()<0.45?DIAMOND:rndSym(true);}
+
+// ── 8. STRIP MANAGEMENT ─────────────────────────────────────
+/**
+ * buildStrip(ri) — Fills a reel strip with STRIP_LEN random symbols.
+ * Resets the strip position to show index 1 (second symbol) at top.
+ *
+ * @param {number} ri - Reel index (0-4)
+ */
+function buildStrip(ri){
+  const strip=UI.strips[ri];
+  strip.innerHTML="";
+  for(let i=0;i<STRIP_LEN;i++){
+    const el=document.createElement("div");
+    el.className="sym";
+    const s=rndSym();
+    el.textContent=s.g;el.dataset.id=s.id;
+    strip.appendChild(el);
+  }
+  strip.style.transition="none";
+  strip.style.transform=`translateY(${-SYM_H}px)`;
+  currentLanding[ri]=1;
+}
+for(let r=0;r<REEL_N;r++)buildStrip(r);
+
+/**
+ * setPos(ri, idx) — Instantly positions a reel strip to show symbol at idx.
+ * No animation — used for immediate repositioning.
+ */
+function setPos(ri,idx){
+  UI.strips[ri].style.transform=`translateY(${-idx*SYM_H}px)`;
+}
+
+/**
+ * normalizeStrip(ri) — Preserves the 3 currently visible symbols,
+ * rebuilds the rest of the strip with fresh random symbols, and
+ * resets the landing index to 1.
+ *
+ * Called before each spin to ensure the strip has enough scroll
+ * distance and randomized upcoming symbols.
+ *
+ * @param {number} ri - Reel index (0-4)
+ */
+function normalizeStrip(ri){
+  const strip=UI.strips[ri];
+  const li=currentLanding[ri];
+  const saved=[];
+  for(let row=0;row<3;row++){
+    const el=strip.children[li+row];
+    saved.push(el?{g:el.textContent,id:el.dataset.id}:rndSym());
+  }
+  strip.innerHTML="";
+  for(let i=0;i<STRIP_LEN;i++){
+    const el=document.createElement("div");
+    el.className="sym";
+    const idx=i-1;
+    const s=(idx>=0&&idx<3)?saved[idx]:rndSym();
+    el.textContent=s.g;
+    el.dataset.id=s.id||"";
+    strip.appendChild(el);
+  }
+  strip.style.transition="none";
+  strip.style.transform=`translateY(${-1*SYM_H}px)`;
+  void strip.offsetHeight;
+  currentLanding[ri]=1;
+}
+
+// v19: removed startFlicker / stopFlicker helpers.
+// The v17/v18 flicker system (rapid symbol cycling + blur classes during
+// spin) has been reverted to v8's behavior — reels just translate smoothly.
+// flickerIvs is retained as a no-op so any stray reference doesn't crash,
+// but no code should call it anymore.
+
+/**
+ * placeOnStrip(ri, top, mid, bot) — Places specific symbols at a
+ * random position on the strip (the final landing position).
+ * Also randomizes symbols above the landing for visual variety.
+ *
+ * @param {number} ri - Reel index
+ * @param {object} top - Symbol for top row
+ * @param {object} mid - Symbol for middle row (center payline)
+ * @param {object} bot - Symbol for bottom row
+ * @returns {number} The landing index where symbols were placed
+ */
+function placeOnStrip(ri,top,mid,bot){
+  const strip=UI.strips[ri];
+  const kids=strip.children;
+  const li=20+Math.floor(Math.random()*(STRIP_LEN-26));
+  function setCell(el,sym){
+    if(!el)return;
+    el.textContent=sym.g;el.dataset.id=sym.id;el.classList.remove("winner");
+  }
+  setCell(kids[li],top);setCell(kids[li+1],mid);setCell(kids[li+2],bot);
+  /* v19: avoid adjacent-duplicate symbols in the lead-up strip so the
+     paper-roll feel carries through the spin (one re-roll, don't loop). */
+  const startI=Math.max(4,li-14);
+  for(let i=startI;i<li;i++){
+    let s=rndSym();
+    const prev=kids[i-1];
+    if(prev&&prev.dataset.id===s.id){
+      const s2=rndSym();
+      if(s2.id!==s.id)s=s2;
+    }
+    setCell(kids[i],s);
+  }
+  return li;
+}
+
+// ── 9. COUNTER ANIMATION ────────────────────────────────────
+/**
+ * tickCounter(el, to) — Smoothly animates a numeric display from
+ * its current value to the target value using requestAnimationFrame.
+ *
+ * Uses cubic ease-out easing: 1-(1-t)^3.
+ * Duration scales with the delta (280ms base + 1.2ms per unit, max 1400ms).
+ * Cancels any previous animation on the same element.
+ *
+ * @param {HTMLElement} el - The display element (textContent is the number)
+ * @param {number} to - Target number to animate to
+ */
+const counterAnims=new WeakMap();
+function tickCounter(el,to){
+  const raw=el.textContent.replace(/[^0-9-]/g,"");
+  const from=parseInt(raw)||0;
+  if(from===to){el.textContent=to.toLocaleString();return;}
+  const prev=counterAnims.get(el);
+  if(prev)cancelAnimationFrame(prev);
+  const delta=Math.abs(to-from);
+  const duration=Math.min(1400,280+delta*1.2);
+  const start=performance.now();
+  const step=(now)=>{
+    const t=Math.min(1,(now-start)/duration);
+    const eased=1-Math.pow(1-t,3);
+    const v=Math.round(from+(to-from)*eased);
+    el.textContent=v.toLocaleString();
+    if(t<1)counterAnims.set(el,requestAnimationFrame(step));
+    else counterAnims.delete(el);
+  };
+  counterAnims.set(el,requestAnimationFrame(step));
+}
+
+// ── 10. RENDER ───────────────────────────────────────────────
+/**
+ * render() — Synchronizes all UI elements to the current game state (S).
+ * Called after every state change (bet change, spin result, token toggle, etc.).
+ *
+ * Updates: balance display, total winnings, free spins count/style,
+ * jackpot value, bet input, button disabled states, token states,
+ * toggle switches, mute button appearance, auto-spin button text,
+ * and streak dot indicators.
+ */
+function render(){
+  tickCounter(UI.bal,S.balance);
+  tickCounter(UI.totalWin,S.totalWin);
+  UI.fs.textContent=S.freeSpins;
+  UI.jp.textContent=S.jackpot.toLocaleString();
+  UI.betInput.value=S.bet;
+  UI.fsPill.className="free-spin-pill"+(S.freeSpins>0?"":" zero");
+  const dis=S.spinning||S.refilling;
+  UI.betInput.disabled=dis;UI.betUp.disabled=dis;UI.betDown.disabled=dis;UI.spinBtn.disabled=dis;
+  /* v20: rotation is tied to actual spin state, not the disabled flag,
+     so refill countdowns / insufficient-balance don't keep the button spinning. */
+  UI.spinBtn.classList.toggle("is-spinning",S.spinning);
+  if(UI.tokLuck){
+    [{key:"luck",el:UI.tokLuck,cnt:UI.tcLuck},
+     {key:"jackpot",el:UI.tokJp,cnt:UI.tcJp},
+     {key:"double",el:UI.tokDbl,cnt:UI.tcDbl}].forEach(({key,el,cnt})=>{
+      cnt.textContent=S.tokens[key];
+      el.classList.toggle("disabled",S.tokens[key]<=0||dis);
+      el.classList.toggle("active",S.activeToken===key);
+    });
+  }
+  UI.tgMusic.classList.toggle("on",S.music);
+  UI.tgSound.classList.toggle("on",S.sound);
+  UI.tgStop.classList.toggle("on",S.stopBig);
+  // Sync both mute buttons (desktop + mobile)
+  const muted=!S.sound;
+  $("muteBtn").classList.toggle("is-muted",muted);
+  const mob=$("muteBtnMob");if(mob)mob.classList.toggle("is-muted",muted);
+  UI.autoBtn.classList.toggle("active",S.autoSpin);
+  UI.autoBtn.textContent=S.autoSpin?"STOP AUTO":"AUTO-SPIN";
+  // Update streak dot indicators (lit for wins, fire at max streak)
+  for(let i=0;i<5;i++){
+    const dot=UI.streakDots[i];
+    dot.classList.remove("lit","fire");
+    if(i<S.streak)dot.classList.add(S.streak>=5?"fire":"lit");
+  }
+}
+
+// ── 11. BET CONTROLS ────────────────────────────────────────
+/**
+ * clampBet(v) — Clamps a bet value to valid range:
+ * - Rounds to nearest MIN_BET multiple
+ * - Minimum: MIN_BET (100)
+ * - Maximum: largest MIN_BET multiple that fits current balance
+ *
+ * @param {number|string} v - Raw bet value to clamp
+ * @returns {number} Valid bet amount
+ */
+function clampBet(v){
+  const r=Math.round(Number(v)/MIN_BET)*MIN_BET;
+  const mx=Math.floor(S.balance/MIN_BET)*MIN_BET||MIN_BET;
+  return Math.max(MIN_BET,Math.min(mx,r));
+}
+function setBet(v){S.bet=clampBet(v);render();}
+UI.betUp.addEventListener("click",()=>setBet(S.bet+MIN_BET));
+UI.betDown.addEventListener("click",()=>setBet(S.bet-MIN_BET));
+UI.betInput.addEventListener("change",()=>setBet(UI.betInput.value));
+UI.betInput.addEventListener("blur",()=>setBet(UI.betInput.value));
+document.querySelectorAll(".qbet").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    const v=btn.dataset.bet;
+    if(v==="max")setBet(S.balance);else setBet(Number(v));
+  });
+});
+
+// ── 12. TOKEN SYSTEM ────────────────────────────────────────
+/**
+ * Token click handlers — toggle activeToken on click.
+ * Disabled when spinning, count is 0, or refilling.
+ */
+[{id:"tokLuck",key:"luck"},{id:"tokJp",key:"jackpot"},{id:"tokDbl",key:"double"}]
+  .forEach(({id,key})=>{
+    const el=$(id);if(!el)return;
+    el.addEventListener("click",()=>{
+      if(S.spinning||S.tokens[key]<=0||S.refilling)return;
+      S.activeToken=S.activeToken===key?null:key;render();
+    });
+  });
+
+// ── 13. TOGGLE SWITCHES ────────────────────────────────────
+UI.tgMusic.addEventListener("click",()=>{S.music=!S.music;if(S.music)startMusic();else stopMusic();render();});
+UI.tgSound.addEventListener("click",()=>{S.sound=!S.sound;render();});
+UI.tgStop.addEventListener("click",()=>{S.stopBig=!S.stopBig;render();});
+
+// ── 14. MODAL SYSTEM ────────────────────────────────────────
+/**
+ * Info modal — opened by info button, closed by X or backdrop click.
+ */
+UI.infoBtn.addEventListener("click",()=>UI.overlay.classList.add("open"));
+UI.closeModal.addEventListener("click",()=>UI.overlay.classList.remove("open"));
+UI.overlay.addEventListener("click",e=>{if(e.target===UI.overlay)UI.overlay.classList.remove("open");});
+
+/* v18: settings popover open/close — click gear to toggle, click outside to close.
+   The Music/Sound/Stop toggles inside still use their existing tgMusic/tgSound/tgStop
+   event listeners; this just handles showing/hiding the container. */
+const settingsBtn=$("settingsBtn");
+const settingsPopover=$("settingsPopover");
+if(settingsBtn&&settingsPopover){
+  settingsBtn.addEventListener("click",e=>{
+    e.stopPropagation();
+    const open=!settingsPopover.classList.contains("open");
+    settingsPopover.classList.toggle("open",open);
+    settingsBtn.setAttribute("aria-expanded",String(open));
+    settingsPopover.setAttribute("aria-hidden",String(!open));
+  });
+  document.addEventListener("click",e=>{
+    if(!settingsPopover.classList.contains("open"))return;
+    if(settingsPopover.contains(e.target)||settingsBtn.contains(e.target))return;
+    settingsPopover.classList.remove("open");
+    settingsBtn.setAttribute("aria-expanded","false");
+    settingsPopover.setAttribute("aria-hidden","true");
+  });
+  document.addEventListener("keydown",e=>{
+    if(e.key==="Escape"&&settingsPopover.classList.contains("open")){
+      settingsPopover.classList.remove("open");
+      settingsBtn.setAttribute("aria-expanded","false");
+      settingsPopover.setAttribute("aria-hidden","true");
+    }
+  });
+}
+
+/**
+ * Mobile button wiring — duplicates desktop button behavior
+ * for the compact buttons shown in settings-row on mobile.
+ */
+const infoBtnMob=$("infoBtnMob");
+const muteBtnMob=$("muteBtnMob");
+const compBtnMob=$("compBtnMob");
+if(infoBtnMob)infoBtnMob.addEventListener("click",()=>UI.overlay.classList.add("open"));
+if(muteBtnMob){
+  muteBtnMob.addEventListener("click",()=>{
+    const newState=!S.sound;
+    S.sound=newState;S.music=newState;
+    if(!S.music)stopMusic();
+    else if(S.music&&!mTimer)startMusic();
+    render();
+  });
+}
+
+// ── LEADERBOARD ─────────────────────────────────────────────
+/**
+ * buildLeaderboard() — Generates the leaderboard entries from
+ * fake players + current user, sorted by score descending.
+ * User's entry is highlighted with .is-user class.
+ */
+function buildLeaderboard(){
+  const lbList=$("lbList");
+  if(!lbList)return;
+  const userEntry={name:USER_NAME,avatar:USER_AVATAR,score:S.totalWin,isUser:true};
+  const all=[...FAKE_PLAYERS,userEntry].sort((a,b)=>b.score-a.score);
+  lbList.innerHTML="";
+  all.forEach((p,i)=>{
+    const rank=i+1;
+    const div=document.createElement("div");
+    div.className="lb-row lb-entry"+(p.isUser?" is-user":"");
+    const rankClass=rank===1?"gold":rank===2?"silver":rank===3?"bronze":"";
+    const rankLabel=rank===1?"🥇":rank===2?"🥈":rank===3?"🥉":"#"+rank;
+    div.innerHTML=`
+      <span class="lb-rank ${rankClass}">${rankLabel}</span>
+      <span class="lb-avatar">${p.avatar}</span>
+      <span class="lb-name">${p.name}${p.isUser?'<span class="lb-you">YOU</span>':""}</span>
+      <span class="lb-score">${p.score.toLocaleString()}</span>`;
+    lbList.appendChild(div);
+  });
+}
+function openLeaderboard(){buildLeaderboard();$("lbOverlay").classList.add("open");}
+$("compBtn").addEventListener("click",openLeaderboard);
+if(compBtnMob)compBtnMob.addEventListener("click",openLeaderboard);
+$("closeLb").addEventListener("click",()=>$("lbOverlay").classList.remove("open"));
+$("lbOverlay").addEventListener("click",e=>{if(e.target===$("lbOverlay"))$("lbOverlay").classList.remove("open");});
+
+// ── 15. AUDIO SYSTEM ────────────────────────────────────────
+/**
+ * Web Audio API based sound system.
+ * - ensureAudio(): Lazy-initializes AudioContext (handles autoplay restrictions).
+ * - beep(f, dur, type, vol): Plays a single tone (used for tick, loss, etc.).
+ * - cheerSnd(): Rising arpeggio + rhythmic hits for win celebrations.
+ * - jackpotSnd(): Extended celebration sound for jackpot wins.
+ * - lossSnd(): Two descending tones for loss feedback.
+ * - tick(): Short high-pitched click during reel spinning.
+ */
+let actx=null;
+function ensureAudio(){
+  if(!actx)try{actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){return null;}
+  if(actx.state==="suspended")actx.resume();
+  return actx;
+}
+function beep(f,dur=0.08,type="square",vol=0.07){
+  if(!S.sound)return;
+  const c=ensureAudio();if(!c)return;
+  const o=c.createOscillator(),g=c.createGain();
+  o.type=type;o.frequency.value=f;g.gain.value=vol;
+  o.connect(g).connect(c.destination);
+  o.start();g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+dur);o.stop(c.currentTime+dur);
+}
+
+/**
+ * cheerSnd() — Celebratory ascending arpeggio (C5→C6→E6→G6 etc.)
+ * with additional rhythmic hits. Plays on any win event.
+ */
+function cheerSnd(){
+  if(!S.sound)return;
+  const c=ensureAudio();if(!c)return;
+  const notes=[523,659,784,1047,1319,1568];
+  notes.forEach((f,i)=>{
+    setTimeout(()=>{
+      const o=c.createOscillator(),g=c.createGain();
+      o.type="triangle";o.frequency.value=f;
+      g.gain.setValueAtTime(0.1,c.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.38);
+      o.connect(g).connect(c.destination);o.start();o.stop(c.currentTime+0.38);
+    },i*65);
+  });
+  [80,200,340].forEach(d=>setTimeout(()=>beep(200+Math.random()*50,0.09,"square",0.055),d));
+}
+
+function jackpotSnd(){
+  cheerSnd();
+  for(let i=0;i<16;i++)setTimeout(()=>beep(350+i*85,0.15,"sawtooth",0.07),i*65);
+}
+function lossSnd(){beep(310,0.14,"sine",0.05);setTimeout(()=>beep(250,0.2,"sine",0.05),130);}
+function tick(){beep(860,0.03,"square",0.015);}
+
+// ── MUSIC SYSTEM ────────────────────────────────────────────
+/**
+ * Simple melody player using Web Audio API oscillators.
+ * MELODY: Array of [frequency, beats] pairs defining the tune.
+ * BPM: Tempo in beats per minute (215 = ~280ms per beat).
+ *
+ * musicTick() advances through the melody one note at a time,
+ * scheduling the next note via setTimeout. A bass line plays
+ * on every other beat using lower frequencies.
+ *
+ * startMusic() / stopMusic() control playback.
+ * tryMusic() auto-starts on first user interaction (click).
+ */
+const MELODY=[
+  [523,1],[659,1],[784,2],[659,1],[523,1],[440,2],
+  [392,1],[440,1],[523,2],[659,1],[784,1],[523,2],
+  [880,1],[784,1],[659,2],[523,1],[392,1],[330,2],[262,4]
+];
+const BPM=215;let mIdx=0,mBeat=0,mTimer=null,musicStarted=false;
+function musicTick(){
+  if(!S.music){mTimer=null;return;}
+  const c=ensureAudio();if(!c){mTimer=null;return;}
+  const[freq,beats]=MELODY[mIdx%MELODY.length];
+  const o=c.createOscillator(),g=c.createGain();
+  o.type="triangle";o.frequency.value=freq;
+  g.gain.setValueAtTime(0.04,c.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+(beats*BPM/1000)*0.8);
+  o.connect(g).connect(c.destination);o.start();o.stop(c.currentTime+beats*BPM/1000);
+  if(mBeat%2===0){
+    const bfs=[131,165,196,131];
+    const bf=bfs[(mBeat/2)%bfs.length];
+    const b=c.createOscillator(),bg=c.createGain();
+    b.type="sine";b.frequency.value=bf;
+    bg.gain.setValueAtTime(0.03,c.currentTime);
+    bg.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.25);
+    b.connect(bg).connect(c.destination);b.start();b.stop(c.currentTime+0.28);
+  }
+  mBeat+=beats;mIdx++;
+  mTimer=setTimeout(musicTick,beats*BPM);
+}
+function startMusic(){if(mTimer)stopMusic();musicTick();}
+function stopMusic(){if(mTimer){clearTimeout(mTimer);mTimer=null;}}
+function tryMusic(){if(!musicStarted&&S.music){musicStarted=true;startMusic();}}
+document.addEventListener("click",tryMusic,{once:true});
+
+// ── 16. WIN EFFECTS ─────────────────────────────────────────
+/**
+ * shakeLanterns() — Triggers the lanternShake animation on both
+ * mascot lantern elements. Called on any win event.
+ * Animation: swinging pendulum motion, 3 iterations, ~1.65s total.
+ */
+function shakeLanterns(){
+  document.querySelectorAll(".mascot").forEach(m=>{
+    m.classList.remove("shaking");
+    void m.offsetWidth;
+    m.classList.add("shaking");
+    m.addEventListener("animationend",()=>m.classList.remove("shaking"),{once:true});
+  });
+}
+
+/**
+ * rainCoins(count) — Creates animated coin/star emoji particles.
+ * ~35% shoot from sides (coinShootLeft/Right), rest fall from top (coinFall).
+ * Each particle self-removes after its animation ends.
+ *
+ * @param {number} count - Number of coin particles to create (18=small, 40=big, 55=jackpot)
+ */
+function rainCoins(count=25){
+  const overlay=UI.coinOverlay;if(!overlay)return;
+  const coins=["🪙","💰","⭐","✨","💫","🏅"];
+  for(let i=0;i<count;i++){
+    const c=document.createElement("div");
+    c.className="coin-piece";
+    c.textContent=coins[Math.floor(Math.random()*coins.length)];
+    const fromSide=Math.random()<0.35;
+    if(fromSide){
+      const fromLeft=Math.random()<0.5;
+      c.style.left=fromLeft?"2vw":"auto";
+      c.style.right=fromLeft?"auto":"2vw";
+      c.style.top=(15+Math.random()*55)+"vh";
+      c.style.animationName=fromLeft?"coinShootRight":"coinShootLeft";
+      c.style.animationDuration=(0.7+Math.random()*0.7)+"s";
+    }else{
+      c.style.left=(Math.random()*100)+"vw";
+      c.style.top="-30px";
+      c.style.animationName="coinFall";
+      c.style.animationDuration=(1.1+Math.random()*1.3)+"s";
+    }
+    c.style.animationDelay=(Math.random()*0.55)+"s";
+    c.style.animationFillMode="forwards";
+    c.style.animationTimingFunction="linear";
+    overlay.appendChild(c);
+    c.addEventListener("animationend",()=>c.remove(),{once:true});
+  }
+}
+
+// ── 17. ROLL GRID ───────────────────────────────────────────
+/**
+ * rollGrid(tok) — Generates a 3×5 grid of symbols for a spin result.
+ *
+ * @param {string|null} tok - Active token: 'luck', 'jackpot', 'double', or null
+ * @returns {Array[3][5]} - grid[row][col], row 0=top, 1=middle(payline), 2=bottom
+ *
+ * Token effects:
+ * - null: Pure weighted random from POOL.
+ * - 'luck': Mid row biased 35% toward high-value; 35% chance to force 3+ match.
+ * - 'jackpot': Mid row 45% diamonds; 20% chance ALL diamonds on center.
+ * - 'double': No bias (effect applied during payout calculation).
+ */
+/* v19: pick a weighted symbol while excluding ids that would collide with
+   what's already in the column. Up to 8 re-rolls, then fall back to the
+   first non-colliding symbol in SYMBOLS so we can never infinite-loop. */
+function pickDistinct(excludeIds,lucky=false){
+  for(let i=0;i<8;i++){
+    const s=rndSym(lucky);
+    if(!excludeIds.includes(s.id))return s;
+  }
+  for(const s of SYMBOLS){
+    if(!excludeIds.includes(s.id))return s;
+  }
+  return SYMBOLS[0];
+}
+function rollGrid(tok){
+  const grid=[[],[],[]];
+  for(let c=0;c<REEL_N;c++){
+    const mid=tok==="jackpot"?rndJpSym():tok==="luck"?rndSym(true):rndSym();
+    grid[1][c]=mid;
+    /* v19: top and bot must differ from mid AND from each other, so the
+       visible column is three distinct symbols — "roll of unique items". */
+    const top=pickDistinct([mid.id],tok==="luck");
+    const bot=pickDistinct([mid.id,top.id],tok==="luck");
+    grid[0][c]=top;grid[2][c]=bot;
+  }
+  if(tok==="luck"&&Math.random()<0.35){
+    const t=grid[1][0];grid[1][1]=t;grid[1][2]=t;
+    if(Math.random()<0.4){grid[1][3]=t;if(Math.random()<0.25)grid[1][4]=t;}
+  }
+  if(tok==="jackpot"&&Math.random()<0.2){
+    for(let c=0;c<REEL_N;c++)grid[1][c]=DIAMOND;
+  }
+  /* v19: after token-forced middle-row overrides, reconcile top/bot so
+     each column's 3 visible cells are still distinct from the (possibly
+     just-replaced) middle symbol. */
+  for(let c=0;c<REEL_N;c++){
+    const mid=grid[1][c];
+    if(grid[0][c].id===mid.id)grid[0][c]=pickDistinct([mid.id,grid[2][c].id]);
+    if(grid[2][c].id===mid.id||grid[2][c].id===grid[0][c].id)
+      grid[2][c]=pickDistinct([mid.id,grid[0][c].id]);
+  }
+  return grid;
+}
+
+// ── 18. EVALUATE ────────────────────────────────────────────
+/**
+ * evaluate(grid, tok, pMult) — Calculates payout from a spin result grid.
+ *
+ * @param {Array[3][5]} grid - The symbol grid from rollGrid()
+ * @param {string|null} tok - Active token type
+ * @param {number} pMult - Periodic bonus multiplier (1 = none, 2/3/5/10 = bonus)
+ * @returns {object} { payout, winRows, msgs, isJp }
+ *   payout: Total credits won
+ *   winRows: Array of row indices that won (0, 1, and/or 2)
+ *   msgs: Array of message strings describing the win
+ *   isJp: Boolean, true if progressive jackpot was hit
+ *
+ * Evaluation rules:
+ * 1. Check center row (ri=1) at full payout (scale=1).
+ * 2. Check top (ri=0) and bottom (ri=2) at half payout (scale=0.5).
+ * 3. For each row: count matching symbols from left; need 3+ to win.
+ *    Match multipliers: 3=30%, 4=60%, 5=100% of base payout.
+ * 4. Star bonus: 2+ stars on center multiply total payout by star count.
+ * 5. Periodic bonus: if pMult>1, multiply total payout.
+ * 6. Double token: if active and payout>0, double it.
+ */
+function evaluate(grid,tok,pMult){
+  let payout=0;const msgs=[];const winRows=[];let isJp=false;
+  function checkRow(ri,scale){
+    const row=grid[ri];
+    let run=1;
+    for(let i=1;i<REEL_N;i++){if(row[i].id===row[0].id)run++;else break;}
+    if(run<3)return;
+    winRows.push(ri);
+    const sym=row[0];
+    if(sym.id==="gift"){
+      if(ri===1){const sp=run===5?15:run===4?10:8;S.freeSpins+=sp;msgs.push(`🎁 +${sp} FREE SPINS!`);}
+      return;
+    }
+    if(sym.id==="diamond"&&run===5&&ri===1){
+      payout+=S.jackpot;S.jackpot=50000;isJp=true;msgs.push("💎 PROGRESSIVE JACKPOT!");return;
+    }
+    const rm=run===5?1:run===4?0.6:0.3;
+    const rp=Math.floor(sym.v*S.bet*rm*run*scale);
+    payout+=rp;
+    msgs.push(`${sym.g}×${run}${scale<1?" (bonus)":""}`);
+  }
+  checkRow(1,1);checkRow(0,0.5);checkRow(2,0.5);
+  const stars=grid[1].filter(s=>s.id==="star").length;
+  if(stars>=2&&payout>0){payout=Math.floor(payout*stars);msgs.push(`⭐ ×${stars} Stars`);}
+  if(pMult>1&&payout>0){payout=Math.floor(payout*pMult);msgs.push(`🎯 Bonus ×${pMult}`);}
+  if(tok==="double"&&payout>0){payout*=2;msgs.push("✨ 2× Token");}
+  return{payout,winRows,msgs,isJp};
+}
+
+/**
+ * rndMult() — Returns a random periodic bonus multiplier.
+ * Distribution: 55% → 2×, 30% → 3×, 12% → 5×, 3% → 10×.
+ */
+function rndMult(){
+  const r=Math.random();
+  return r<0.55?2:r<0.85?3:r<0.97?5:10;
+}
+
+// ── 19. HIGHLIGHT WINNERS ───────────────────────────────────
+/**
+ * highlightWinners(winRows) — Adds the "winner" CSS class to all
+ * symbols in winning rows, triggering the symWin scale+glow animation.
+ * Automatically removed after 2600ms.
+ *
+ * @param {number[]} winRows - Array of winning row indices (0, 1, 2)
+ */
+function highlightWinners(winRows){
+  winRows.forEach(ri=>{
+    for(let c=0;c<REEL_N;c++){
+      const strip=UI.strips[c];
+      const li=currentLanding[c];
+      const ch=strip.children[li+ri];
+      if(ch)ch.classList.add("winner");
+    }
+  });
+  setTimeout(()=>document.querySelectorAll(".sym.winner").forEach(e=>e.classList.remove("winner")),2600);
+}
+
+// ── 20. CELEBRATION ─────────────────────────────────────────
+/**
+ * celebrate(txt) — Shows full-screen celebration with animated text
+ * and confetti particles. Used for BIG WIN and JACKPOT events.
+ *
+ * @param {string} txt - Celebration text ("BIG WIN!" or "JACKPOT!!!")
+ *
+ * Creates 80 confetti pieces with random colors from the casino palette.
+ * Celebration displays for 2600ms then fades out.
+ */
+function celebrate(txt){
+  UI.cel.innerHTML="";
+  const big=document.createElement("div");big.className="cel-text";big.textContent=txt;
+  UI.cel.appendChild(big);
+  const colors=["#FFD700","#C8102E","#E63946","#FFF4B0","#C9A227","#8B0000"];
+  for(let i=0;i<80;i++){
+    const c=document.createElement("div");c.className="confetti-piece";
+    c.style.left=Math.random()*100+"vw";c.style.background=colors[i%colors.length];
+    c.style.animationDuration=(1.4+Math.random()*1.6)+"s";
+    c.style.animationDelay=(Math.random()*0.4)+"s";
+    UI.cel.appendChild(c);
+  }
+  UI.cel.classList.add("show");
+  setTimeout(()=>{UI.cel.classList.remove("show");setTimeout(()=>UI.cel.innerHTML="",400);},2600);
+}
+
+/**
+ * flashMult(n) — Shows the "×N!" multiplier popup in the center
+ * of the reel area. Triggers the multPop scale animation.
+ */
+function flashMult(n){
+  UI.multPop.textContent=`×${n}!`;
+  UI.multPop.classList.remove("show");
+  void UI.multPop.offsetWidth;
+  UI.multPop.classList.add("show");
+  setTimeout(()=>UI.multPop.classList.remove("show"),1500);
+}
+
+// ── 21. REFILL SYSTEM ───────────────────────────────────────
+/**
+ * checkRefill() — Checks if player is out of credits and needs a refill.
+ * Triggers 30-second countdown if balance < MIN_BET and no free spins.
+ *
+ * startRefill() — Begins the countdown, disabling all controls.
+ * After 30 seconds, grants 500 credits and resets total winnings.
+ */
+function checkRefill(){
+  if(S.balance<MIN_BET&&!S.refilling&&S.freeSpins===0)startRefill();
+}
+function startRefill(){
+  S.refilling=true;S.autoSpin=false;render();
+  let rem=30;
+  UI.banner.className="win-banner countdown";
+  UI.banner.textContent=`Out of credits! Refilling in ${rem}s…`;
+  const iv=setInterval(()=>{
+    rem--;
+    if(rem>0){UI.banner.textContent=`Out of credits! Refilling in ${rem}s…`;}
+    else{
+      clearInterval(iv);
+      S.balance=500;S.bet=MIN_BET;S.totalWin=0;S.refilling=false;render();
+      UI.banner.className="win-banner win";
+      UI.banner.textContent="Refilled with 500 credits! Good luck!";
+    }
+  },1000);
+}
+
+// ── STOP REEL ───────────────────────────────────────────────
+/**
+ * stopReel(ri, li, dur) — Smoothly animates a reel strip to its
+ * final landing position using CSS transition.
+ *
+ * @param {number} ri - Reel index
+ * @param {number} li - Landing index (strip position to stop at)
+ * @param {number} dur - Transition duration in milliseconds
+ * @returns {Promise} Resolves when the transition completes
+ *
+ * Uses cubic-bezier(0.13,0.85,0.22,1.0) for a natural "overshoot
+ * then settle" easing that mimics physical reel momentum.
+ */
+function stopReel(ri,li,dur){
+  return new Promise(res=>{
+    /* v19: no flicker to stop — removed startFlicker/stopFlicker system. */
+    const strip=UI.strips[ri];
+    /* v19: reverted to v8's natural overshoot-and-settle curve. */
+    strip.style.transition=`transform ${dur}ms cubic-bezier(0.13,0.85,0.22,1.0)`;
+    strip.style.transform=`translateY(${-li*SYM_H}px)`;
+    currentLanding[ri]=li;
+    const onEnd=()=>{
+      strip.removeEventListener("transitionend",onEnd);
+      strip.style.transition="";
+      if(S.sound)beep(210,0.07,"square",0.05);
+      res();
+    };
+    strip.addEventListener("transitionend",onEnd,{once:true});
+    setTimeout(onEnd,dur+220);
+  });
+}
+
+/** wait(ms) — Simple promise-based delay utility. */
+function wait(ms){return new Promise(r=>setTimeout(r,ms));}
+
+/**
+ * LOSS_MSGS — Encouraging messages shown on losing spins.
+ * One is randomly selected, or a "near miss" message is
+ * generated if the player got 2+ matching from the left.
+ */
+const LOSS_MSGS=[
+  "Almost! The reels are warming up…",
+  "So close — next spin feels lucky!",
+  "Nearly there — keep the faith!",
+  "The jackpot is growing just for you!",
+  "One more spin to turn it around!",
+];
+function lossMsg(grid){
+  const mid=grid[1];let run=1;
+  for(let i=1;i<REEL_N;i++){if(mid[i].id===mid[0].id)run++;else break;}
+  if(run>=2)return `So close — ${run} ${mid[0].g} from the left!`;
+  return LOSS_MSGS[Math.floor(Math.random()*LOSS_MSGS.length)];
+}
+
+// ── 22. MAIN SPIN FUNCTION ──────────────────────────────────
+/**
+ * spin() — The main game loop. Orchestrates a complete spin sequence:
+ *
+ * 1. Validate: Check not already spinning, not refilling.
+ * 2. Deduct: Subtract bet from balance (or use free spin).
+ * 3. Prepare: Normalize strips, generate result grid, calculate bonus.
+ * 4. Animate: Start flicker on all reels, then stop them sequentially
+ *    (left to right) with increasing delay. Last reel gets a slow
+ *    "tension" flicker phase before stopping.
+ * 5. Evaluate: Calculate payout, apply tokens and multipliers.
+ * 6. Display: Show win/loss banner, trigger celebrations, update state.
+ * 7. Continue: If auto-spin is active, schedule next spin after delay.
+ *
+ * All animation timing is carefully sequenced with await/wait calls.
+ */
+async function spin(){
+  if(S.spinning||S.refilling)return;
+  tryMusic();
+
+  const usingFS=S.freeSpins>0;
+  if(!usingFS){
+    if(S.bet>S.balance){
+      UI.banner.textContent="Not enough credits — lower your bet.";
+      UI.banner.className="win-banner loss";return;
+    }
+    S.balance-=S.bet;
+  }else{S.freeSpins--;}
+
+  S.spinning=true;S.spinCount++;
+  SYM_H=getSymH();
+  const tok=S.activeToken;S.activeToken=null;render();
+
+  UI.banner.className="win-banner";
+  UI.banner.textContent=usingFS?"FREE SPIN!":"Spinning…";
+  UI.payline.classList.remove("active");
+
+  for(let r=0;r<REEL_N;r++)normalizeStrip(r);
+
+  const grid=rollGrid(tok);
+  // v17: Periodic multiplier — every 10th spin, cycling 2x → 3x → 5x → repeat.
+  // (Replaces previous random ×7 trigger; fixed cadence is more rewarding.)
+  let pMult=1;
+  if(S.spinCount>0&&S.spinCount%10===0){
+    pMult=[2,3,5][((S.spinCount/10)-1)%3];
+    showMultBanner(pMult);
+    showMultBadge(pMult);
+    await wait(900); // brief reveal before reels begin
+    hideMultBanner();
+  }
+
+  const landings=[];
+  for(let r=0;r<REEL_N;r++){
+    landings.push(placeOnStrip(r,grid[0][r],grid[1][r],grid[2][r]));
+  }
+
+  // v22: reverted to v19's single-transition feel (cubic-bezier
+  // 0.13, 0.85, 0.22, 1.0 inside stopReel) but executed in parallel
+  // via Promise.all. v21's two-phase (linear scroll + decel stop)
+  // was rejected as "not smooth". Staggered durations produce the
+  // left-to-right stop.
+  let tickIv=null;
+  if(S.sound)tickIv=setInterval(tick,110);
+
+  await wait(400);
+
+  const stopDurations=[700,900,1100,1300,2000];
+  await Promise.all(UI.strips.map((strip,ri)=>
+    stopReel(ri,landings[ri],stopDurations[ri])
+  ));
+
+  if(tickIv)clearInterval(tickIv);
+
+  // Phase 4: Evaluate results and update game state.
+  // v17: pass pMult=1 so evaluate() does not apply the multiplier internally;
+  // we apply the periodic multiplier OUTSIDE evaluate() per design constraint.
+  const res=evaluate(grid,tok,1);
+  if(pMult>1&&res.payout>0){
+    res.payout=Math.floor(res.payout*pMult);
+    res.msgs.push(`🎯 ×${pMult} Multiplier`);
+  }
+  // v17: cache final reel state for resize / theme re-apply
+  S.lastGrid=grid;
+  if(tok&&S.tokens[tok]>0)S.tokens[tok]--;
+
+  if(res.payout>0){
+    // v17: any win clears auto-loss softening (streak, dim, pulse, overlay)
+    S.autoLossStreak=0;
+    clearLossSoftening();
+    S.balance+=res.payout;S.totalWin+=res.payout;S.streak++;
+    if(S.streak>0&&S.streak%3===0){S.freeSpins+=2;res.msgs.push("+2 Free Spins!");}
+    if(S.streak>0&&S.streak%5===0){S.tokens.luck++;res.msgs.push("+1 Lucky Token");}
+    S.jackpot+=Math.floor(S.bet*0.5);
+    if(pMult>1){flashMult(pMult);await wait(350);}
+    UI.payline.classList.add("active");
+    highlightWinners(res.winRows);
+    if(res.isJp){
+      UI.banner.className="win-banner jackpot";
+      UI.banner.textContent=`JACKPOT! +${res.payout.toLocaleString()} credits!`;
+      celebrate("JACKPOT!!!");
+      jackpotSnd();
+      shakeLanterns();
+      rainCoins(55);
+      if(S.autoSpin&&S.stopBig)setAuto(false);
+    }else if(res.payout>=S.bet*10){
+      UI.banner.className="win-banner win";
+      UI.banner.textContent=`BIG WIN! +${res.payout.toLocaleString()} credits! — ${res.msgs.join(" · ")}`;
+      celebrate("BIG WIN!");
+      cheerSnd();
+      shakeLanterns();
+      rainCoins(40);
+      if(S.autoSpin&&S.stopBig&&res.payout>=S.bet*25)setAuto(false);
+    }else{
+      UI.banner.className="win-banner win";
+      UI.banner.textContent=`WIN +${res.payout.toLocaleString()} — ${res.msgs.join(" · ")}`;
+      cheerSnd();
+      shakeLanterns();
+      rainCoins(18);
+    }
+  }else{
+    S.streak=0;
+    UI.banner.className="win-banner loss";
+    let msg=lossMsg(grid);
+    if(Math.random()<0.08){S.freeSpins++;msg+=" — Consolation Free Spin!";}
+    UI.banner.textContent=msg;
+    S.jackpot+=Math.max(1,Math.floor(S.bet*0.1));
+    lossSnd();
+    // v17: track consecutive losses only during auto-spin
+    if(S.autoSpin){
+      S.autoLossStreak++;
+      // 5+ losses: dim cabinet & pulse balance (until next win or auto-off)
+      if(S.autoLossStreak>=5)applyLossDim();
+    }
+  }
+
+  // v17: hide multiplier badge once spin is complete
+  hideMultBadge();
+
+  S.jackpot=Math.max(50000,S.jackpot);
+  S.spinning=false;render();checkRefill();
+
+  // Check for theme unlocks based on spin results (NEW in v16)
+  checkThemeUnlocks(res);
+
+  if(S.autoSpin){
+    let nextDelay=res.payout>0?1300:650;
+    // v17: after exactly 3 consecutive losses, insert a 1-spin pause
+    // with the "Hang in there..." overlay before resuming.
+    if(res.payout===0&&S.autoLossStreak===3){
+      showSoftOverlay();
+      await wait(1800);
+      hideSoftOverlay();
+    }else{
+      await wait(nextDelay);
+    }
+    if(S.autoSpin&&(S.balance>=S.bet||S.freeSpins>0))spin();
+    else{setAuto(false);checkRefill();}
+  }
+}
+
+// ── 23. AUTO-SPIN ───────────────────────────────────────────
+/** setAuto(on) — Enables or disables automatic continuous spinning. */
+function setAuto(on){
+  S.autoSpin=on;
+  // v17: turning auto-spin off clears the loss-softening state
+  if(!on){S.autoLossStreak=0;clearLossSoftening();}
+  render();
+  if(on&&!S.spinning)spin();
+}
+UI.autoBtn.addEventListener("click",()=>setAuto(!S.autoSpin));
+UI.spinBtn.addEventListener("click",()=>{if(!S.spinning&&!S.refilling)spin();});
+document.addEventListener("keydown",e=>{
+  if(e.code==="Space"&&document.activeElement!==UI.betInput){
+    e.preventDefault();if(!S.spinning&&!S.refilling)spin();
+  }
+});
+
+// ── 24. RESIZE HANDLER ──────────────────────────────────────
+/**
+ * On window resize, recalculate symbol height from CSS and
+ * reposition all reel strips to maintain alignment.
+ * Only runs when not spinning to avoid visual glitches.
+ */
+/* v22: derive --symbol-h from the actual reel cell height so the
+   visible 3-row window always fills the cabinet (v21 clamped
+   --symbol-h statically which left empty space below). Runs on
+   load and on every resize. */
+function fitReelsToCabinet(){
+  const el=UI.reelEls[0];
+  if(!el)return;
+  const h=el.clientHeight;
+  if(h<=0)return;
+  const newSymH=Math.max(70,Math.floor(h/3));
+  document.documentElement.style.setProperty("--symbol-h",newSymH+"px");
+  SYM_H=newSymH;
+  for(let r=0;r<REEL_N;r++){
+    if(!UI.strips[r])continue;
+    UI.strips[r].style.transition="none";
+    UI.strips[r].style.transform=`translateY(${-(currentLanding[r]||1)*SYM_H}px)`;
+  }
+  void(UI.strips[0]&&UI.strips[0].offsetHeight);
+  applyLastGrid();
+}
+
+window.addEventListener("resize",()=>{
+  if(S.spinning)return;
+  fitReelsToCabinet();
+});
+
+// ── 25. PERSISTENCE ─────────────────────────────────────────
+/**
+ * save() / load() — Persist game state to localStorage.
+ * Key: "spinfire.v2" — stores balance, bet, tokens, settings.
+ * Auto-saves every 3 seconds and on page unload.
+ * On load, clamps balance to minimum 500 if below MIN_BET.
+ */
+const KEY="spinfire.v2";
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify({
+    balance:S.balance,bet:S.bet,totalWin:S.totalWin,freeSpins:S.freeSpins,jackpot:S.jackpot,
+    tokens:S.tokens,music:S.music,sound:S.sound,stopBig:S.stopBig,
+  }));}catch(e){}
+}
+function load(){
+  try{
+    const raw=localStorage.getItem(KEY);if(!raw)return;
+    const d=JSON.parse(raw);Object.assign(S,d);
+    if(S.balance<MIN_BET)S.balance=500;
+    S.bet=Math.max(MIN_BET,Math.round(S.bet/MIN_BET)*MIN_BET);
+    if(typeof S.totalWin!=="number")S.totalWin=0;
+  }catch(e){}
+}
+load();
+setInterval(save,3000);
+window.addEventListener("beforeunload",save);
+
+render();
+
+/* v22: fit reels to cabinet on initial paint — waits one frame for
+   the flex layout to settle, then reads .reel clientHeight. */
+requestAnimationFrame(fitReelsToCabinet);
+
+// ── 26. JACKPOT MICRO-TICKERS ───────────────────────────────
+/**
+ * Periodic value incrementors for each jackpot tier.
+ * Creates the illusion that jackpots are growing in real-time.
+ * Each tier ticks at a different rate:
+ *   GRAND: every 1.8s (+1)
+ *   MAJOR: every 3.5s (+1)
+ *   MINOR: every 6s (+1)
+ *   MINI: every 9s (+1)
+ *
+ * Only ticks when not spinning/refilling to avoid conflicts.
+ */
+const jpTicker={
+  major:8888,minor:888,mini:88,
+  majorEl:$("jpMajorVal"),minorEl:$("jpMinorVal"),miniEl:$("jpMiniVal"),
+};
+setInterval(()=>{if(S.spinning||S.refilling)return;S.jackpot+=1;UI.jp.textContent=S.jackpot.toLocaleString();},1800);
+setInterval(()=>{if(S.spinning||S.refilling)return;jpTicker.major+=1;jpTicker.majorEl.textContent=jpTicker.major.toLocaleString();},3500);
+setInterval(()=>{if(S.spinning||S.refilling)return;jpTicker.minor+=1;jpTicker.minorEl.textContent=jpTicker.minor.toLocaleString();},6000);
+setInterval(()=>{if(S.spinning||S.refilling)return;jpTicker.mini+=1;jpTicker.miniEl.textContent=jpTicker.mini.toLocaleString();},9000);
+
+// ── 27. MASTER MUTE ─────────────────────────────────────────
+/**
+ * Desktop mute button — toggles both sound effects AND music.
+ */
+$("muteBtn").addEventListener("click",()=>{
+  const newState=!S.sound;
+  S.sound=newState;S.music=newState;
+  if(!S.music)stopMusic();
+  else if(S.music&&!mTimer)startMusic();
+  render();
+});
+
+// ================================================================
+// ██  28. THEME SYSTEM (NEW in v16)  ██
+// ================================================================
+/**
+ * THEME SYSTEM — Allows users to switch between 7 visual themes.
+ *
+ * Architecture:
+ * - Themes are defined as CSS variable overrides on [data-theme="xxx"].
+ * - Applying a theme = setting data-theme attribute on <html>.
+ * - Two themes are locked and can only be unlocked via gameplay:
+ *   "dragon-fire": Win 5,000+ credits in a single spin.
+ *   "diamond-frost": Hit the Progressive Jackpot (5 diamonds).
+ * - Theme selection and unlock state are persisted to localStorage.
+ * - A MutationObserver watches the win banner for unlock triggers.
+ *
+ * THEMES object defines all available themes with their metadata,
+ * color swatches (for preview cards), and lock/unlock conditions.
+ */
+
+/**
+ * THEMES — Master theme registry.
+ * Each key is the data-theme attribute value.
+ * Properties:
+ *   name     {string}  Display name
+ *   icon     {string}  Emoji icon for the preview card
+ *   locked   {boolean} Whether it starts locked (unlockable via gameplay)
+ *   unlock   {string}  Description of unlock condition (for locked themes)
+ *   desc     {string}  Short description shown on preview card
+ *   swatches {string[]} 3 hex colors for the preview swatch row
+ *   starColor {string}  Accent color used for updating the bg-stars SVG pattern
+ */
+const THEMES={
+  "imperial":{
+    name:"Imperial Red",icon:"🏮",locked:false,
+    desc:"Classic red & gold imperial theme",
+    swatches:["#C8102E","#FFD700","#450000"],
+    starColor:"#c9a227"
+  },
+  "royal-blue":{
+    name:"Royal Blue",icon:"👑",locked:false,
+    desc:"Regal navy blue with gold accents",
+    swatches:["#2E5CB8","#FFD700","#0A1A3A"],
+    starColor:"#B8860B"
+  },
+  "golden-fortune":{
+    name:"Golden Fortune",icon:"🥇",locked:false,
+    desc:"Opulent black & gold VIP style",
+    swatches:["#DAA520","#FFD700","#1A1200"],
+    starColor:"#DAA520"
+  },
+  "emerald-jade":{
+    name:"Emerald Jade",icon:"🍀",locked:false,
+    desc:"Lush jade green & gold prosperity",
+    swatches:["#228B22","#50C878","#0A2010"],
+    starColor:"#2E8B57"
+  },
+  "midnight-purple":{
+    name:"Midnight Purple",icon:"🔮",locked:false,
+    desc:"Luxurious purple & lavender mystery",
+    swatches:["#9B59B6","#C0A0F0","#1A0A2E"],
+    starColor:"#7D3C98"
+  },
+  "dragon-fire":{
+    name:"Dragon Fire",icon:"🐲",locked:true,
+    unlock:"Win 5,000+ credits in a single spin",
+    desc:"Intense fire orange & gold blaze",
+    swatches:["#FF4500","#FF8C00","#2A0A00"],
+    starColor:"#CC5500"
+  },
+  "diamond-frost":{
+    name:"Diamond Frost",icon:"❄️",locked:true,
+    unlock:"Hit the Progressive Jackpot",
+    desc:"Icy blue & crystal white elegance",
+    swatches:["#4FC3F7","#88D8F0","#041828"],
+    starColor:"#3A9ABF"
+  }
+};
+
+// ── Theme persistence keys ──────────────────────────────────
+const THEME_KEY="spinfire.theme";
+const UNLOCK_KEY="spinfire.unlocked";
+
+/**
+ * unlockedThemes — Set of theme IDs that have been unlocked.
+ * Loaded from localStorage; defaults to all non-locked themes.
+ */
+let unlockedThemes=new Set(
+  Object.entries(THEMES).filter(([,t])=>!t.locked).map(([k])=>k)
+);
+try{
+  const saved=localStorage.getItem(UNLOCK_KEY);
+  if(saved){
+    const arr=JSON.parse(saved);
+    if(Array.isArray(arr))unlockedThemes=new Set(arr);
+  }
+}catch(e){}
+
+/** currentTheme — Currently active theme ID. Loaded from localStorage. */
+let currentTheme=localStorage.getItem(THEME_KEY)||"imperial";
+// Validate: if theme doesn't exist or is locked and not unlocked, fall back
+if(!THEMES[currentTheme]||(THEMES[currentTheme].locked&&!unlockedThemes.has(currentTheme))){
+  currentTheme="imperial";
+}
+
+/**
+ * applyTheme(id) — Applies a theme by setting the data-theme attribute
+ * on <html> and updating the bg-stars SVG pattern color.
+ *
+ * @param {string} id - Theme ID (key from THEMES object)
+ */
+function applyTheme(id){
+  if(!THEMES[id])return;
+  if(THEMES[id].locked&&!unlockedThemes.has(id))return;
+  currentTheme=id;
+  document.documentElement.setAttribute("data-theme",id);
+  localStorage.setItem(THEME_KEY,id);
+  // Update bg-stars SVG pattern with theme's accent color
+  updateBgStars(THEMES[id].starColor);
+  // v17: ensure cached reel symbols re-render correctly at the
+  // theme's --symbol-h with no emoji fallback / shifting.
+  SYM_H=getSymH();
+  for(let r=0;r<REEL_N;r++){
+    if(UI.strips[r]){
+      UI.strips[r].style.transition="none";
+      UI.strips[r].style.transform=`translateY(${-currentLanding[r]*SYM_H}px)`;
+    }
+  }
+  applyLastGrid();
+}
+
+/**
+ * updateBgStars(color) — Regenerates the bg-stars SVG data URI
+ * with the given accent color. This is necessary because CSS
+ * variables cannot be used inside SVG data URIs.
+ *
+ * @param {string} color - Hex color for the SVG stroke (e.g., "#c9a227")
+ */
+function updateBgStars(color){
+  const encoded=color.replace("#","%23");
+  const svg=`url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'><g fill='none' stroke='${encoded}' stroke-width='0.9' opacity='0.18'><circle cx='60' cy='60' r='44'/><circle cx='60' cy='60' r='26'/><circle cx='60' cy='60' r='12'/><path d='M60 12 L60 108 M12 60 L108 60 M26 26 L94 94 M94 26 L26 94'/></g></svg>")`;
+  const el=document.querySelector(".bg-stars");
+  if(el)el.style.backgroundImage=svg;
+}
+
+/**
+ * unlockTheme(id) — Unlocks a locked theme and shows a notification toast.
+ * Persists the unlock to localStorage. No-op if already unlocked.
+ *
+ * @param {string} id - Theme ID to unlock
+ */
+function unlockTheme(id){
+  if(unlockedThemes.has(id))return;
+  unlockedThemes.add(id);
+  try{localStorage.setItem(UNLOCK_KEY,JSON.stringify([...unlockedThemes]));}catch(e){}
+  // Show unlock toast notification
+  const toast=$("themeUnlockToast");
+  const nameEl=$("themeUnlockName");
+  if(toast&&nameEl&&THEMES[id]){
+    nameEl.textContent=`${THEMES[id].icon} ${THEMES[id].name}`;
+    toast.classList.add("show");
+    setTimeout(()=>toast.classList.remove("show"),3500);
+  }
+}
+
+/**
+ * checkThemeUnlocks(res) — Called after each spin to check if
+ * unlock conditions have been met.
+ *
+ * Unlock conditions:
+ * - "dragon-fire": res.payout >= 5000
+ * - "diamond-frost": res.isJp === true (progressive jackpot hit)
+ *
+ * @param {object} res - Evaluation result from evaluate()
+ */
+function checkThemeUnlocks(res){
+  if(res.payout>=5000&&!unlockedThemes.has("dragon-fire")){
+    unlockTheme("dragon-fire");
+  }
+  if(res.isJp&&!unlockedThemes.has("diamond-frost")){
+    unlockTheme("diamond-frost");
+  }
+}
+
+// ── Theme Modal ─────────────────────────────────────────────
+/**
+ * buildThemeModal() — Generates the theme selector grid inside
+ * the theme modal. Each theme gets a card showing:
+ * - Icon and name
+ * - 3 color swatches previewing the palette
+ * - Status badge (ACTIVE / SELECT / LOCKED)
+ * - Unlock hint for locked themes
+ *
+ * Cards are clickable to apply unlocked themes.
+ */
+function buildThemeModal(){
+  const grid=$("themeGrid");
+  if(!grid)return;
+  grid.innerHTML="";
+  Object.entries(THEMES).forEach(([id,t])=>{
+    const isUnlocked=unlockedThemes.has(id);
+    const isActive=currentTheme===id;
+    const isLocked=t.locked&&!isUnlocked;
+
+    const card=document.createElement("div");
+    card.className="theme-card"+(isActive?" active":"")+(isLocked?" locked":"");
+
+    // Color swatch preview
+    let swatchHTML='<div class="theme-swatches">';
+    t.swatches.forEach(c=>{
+      swatchHTML+=`<div class="theme-swatch" style="background:${c}"></div>`;
+    });
+    swatchHTML+='</div>';
+
+    // Status badge
+    let statusHTML;
+    if(isActive){
+      statusHTML='<span class="theme-status active-badge">ACTIVE</span>';
+    }else if(isLocked){
+      statusHTML='<span class="theme-status locked-badge">🔒 LOCKED</span>';
+    }else{
+      statusHTML='<span class="theme-status select-badge">SELECT</span>';
+    }
+
+    // Unlock hint for locked themes
+    let unlockHTML="";
+    if(isLocked&&t.unlock){
+      unlockHTML=`<div class="theme-unlock-hint">${t.unlock}</div>`;
+    }
+
+    card.innerHTML=`
+      ${swatchHTML}
+      <span class="theme-icon">${t.icon}</span>
+      <span class="theme-name">${t.name}</span>
+      <span class="theme-desc">${t.desc}</span>
+      ${statusHTML}
+      ${unlockHTML}`;
+
+    // Click handler: apply theme if unlocked and not already active
+    if(!isLocked&&!isActive){
+      card.addEventListener("click",()=>{
+        applyTheme(id);
+        buildThemeModal(); // Rebuild to update active/select badges
+      });
+    }
+
+    grid.appendChild(card);
+  });
+}
+
+/**
+ * openThemeModal() — Opens the theme selector modal.
+ * Rebuilds the grid each time to reflect current unlock/active state.
+ */
+function openThemeModal(){
+  buildThemeModal();
+  $("themeOverlay").classList.add("open");
+}
+
+// ── Theme button event wiring ───────────────────────────────
+// Desktop theme button
+$("themeBtn").addEventListener("click",openThemeModal);
+// Mobile theme button
+const themeBtnMob=$("themeBtnMob");
+if(themeBtnMob)themeBtnMob.addEventListener("click",openThemeModal);
+// Close button and backdrop click
+$("closeTheme").addEventListener("click",()=>$("themeOverlay").classList.remove("open"));
+$("themeOverlay").addEventListener("click",e=>{
+  if(e.target===$("themeOverlay"))$("themeOverlay").classList.remove("open");
+});
+
+// ── Apply saved theme on load ───────────────────────────────
+applyTheme(currentTheme);
+
+// ============================================================
+// v17 HELPER FUNCTIONS — multiplier UI, loss softening, reel stability
+// ============================================================
+
+/**
+ * showMultBanner(n) — Display the "Nx MULTIPLIER SPIN!" banner above
+ * the reels just before a multiplier spin starts. Uses CSS .show class.
+ */
+function showMultBanner(n){
+  if(!UI.multBanner)return;
+  UI.multBanner.textContent=`${n}x MULTIPLIER SPIN!`;
+  UI.multBanner.classList.add("show");
+}
+function hideMultBanner(){
+  if(UI.multBanner)UI.multBanner.classList.remove("show");
+}
+
+/**
+ * showMultBadge(n) / hideMultBadge() — Toggle the small badge on the
+ * spin button that displays the active multiplier during the spin.
+ */
+function showMultBadge(n){
+  if(!UI.multBadge)return;
+  UI.multBadge.textContent=`${n}x`;
+  UI.multBadge.classList.add("active");
+}
+function hideMultBadge(){
+  if(UI.multBadge)UI.multBadge.classList.remove("active");
+}
+
+/**
+ * showSoftOverlay() / hideSoftOverlay() — Toggle the small encouraging
+ * "Hang in there..." overlay shown after 3 consecutive auto-spin losses.
+ */
+function showSoftOverlay(){
+  if(UI.softOverlay)UI.softOverlay.classList.add("show");
+}
+function hideSoftOverlay(){
+  if(UI.softOverlay)UI.softOverlay.classList.remove("show");
+}
+
+/**
+ * applyLossDim() / clearLossSoftening() — Visual cues for sustained
+ * losing streaks during auto-spin. After 5+ losses the cabinet dims
+ * to 85% brightness and the balance plaque slow-pulses for attention.
+ * All effects clear immediately on next win or auto-spin off.
+ */
+function applyLossDim(){
+  if(UI.cabinet)UI.cabinet.classList.add("cabinet-dimmed");
+  if(UI.balCard)UI.balCard.classList.add("bal-attention-pulse");
+}
+function clearLossSoftening(){
+  hideSoftOverlay();
+  if(UI.cabinet)UI.cabinet.classList.remove("cabinet-dimmed");
+  if(UI.balCard)UI.balCard.classList.remove("bal-attention-pulse");
+}
+
+/**
+ * applyLastGrid() — Re-stamp the visible cells of every reel with the
+ * symbols from S.lastGrid (the final grid of the most recent spin).
+ *
+ * Used on window resize and on theme switch so reels remain stable —
+ * symbols never shift, blank, or fall back to placeholder emoji when
+ * the viewport changes or --symbol-h is recomputed.
+ *
+ * No-op if there is no cached grid (i.e. before the first spin) or
+ * if a spin is currently in progress (avoids fighting the animation).
+ */
+function applyLastGrid(){
+  if(!S.lastGrid||S.spinning)return;
+  for(let r=0;r<REEL_N;r++){
+    const strip=UI.strips[r];
+    if(!strip)continue;
+    const li=currentLanding[r];
+    for(let row=0;row<3;row++){
+      const cell=strip.children[li+row];
+      const sym=S.lastGrid[row]&&S.lastGrid[row][r];
+      if(cell&&sym){
+        cell.textContent=sym.g;
+        cell.dataset.id=sym.id||"";
+      }
+    }
+  }
+}
+
+})();
+</script>
+</body>
+</html>
