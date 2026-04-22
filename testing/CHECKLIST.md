@@ -1,183 +1,138 @@
 # TEST-CHECKLIST.md
 
-## Slot Machine Testing Checklist
+## Manual Slot Machine Testing Checklist
 
 ### Notes
-- Manual testing is for visual polish, animation, sound, and responsive layout.
-- Playwright is for repeatable user flows.
-- Unit tests are for logic and state updates.
-- Use the built-in test panel whenever possible so tests do not depend on randomness.
+- This checklist is only for manual browser testing.
+- This is to validate visual behavior, interaction, layout, and user-facing flows.
 
 ---
 
-## 1. Core Logic
+## 1. Balance / Bet Behavior
 
-- [ ] `evaluate()` returns 0 payout for a losing grid
-- [ ] `evaluate()` returns correct payout for a small win
-- [ ] `evaluate()` returns correct payout for a medium win
-- [ ] `evaluate()` returns correct payout for a big win
-- [ ] `evaluate()` handles jackpot / 5-diamond outcome correctly
-- [ ] `evaluate()` handles free spin awards correctly
-- [ ] multiplier logic applies correctly after evaluation
-- [ ] invalid or malformed input does not crash logic
-
----
-
-## 2. Grid / Reel Generation
-
-- [ ] `rollGrid()` returns a valid 3x5 grid
-- [ ] all returned symbols are valid symbol ids
-- [ ] forced grid is used exactly once
-- [ ] after forced grid is used, next spin returns to normal behavior
-- [ ] `placeOnStrip()` places the requested symbols correctly
-- [ ] strip normalization does not break visible reel state
+- [X] starting balance is displayed correctly
+- [X] bet increases correctly with `+`
+- [X] bet decreases correctly with `-`
+- [X] bet input accepts valid values
+- [X] invalid bet input is handled safely
+- [X] normal spin deducts bet from balance
+- [X] free spin does not deduct normal credits
+- [X] winnings are added back to balance correctly
+- [X] balance never becomes negative
 
 ---
 
-## 3. Balance / Bet Behavior
+## 2. Spin Flow
 
-- [ ] starting balance is displayed correctly
-- [ ] bet increases correctly with `+`
-- [ ] bet decreases correctly with `-`
-- [ ] bet input accepts valid values
-- [ ] invalid bet input is handled safely
-- [ ] normal spin deducts bet from balance
-- [ ] free spin does not deduct normal credits
-- [ ] winnings are added back to balance correctly
-- [ ] balance never becomes negative
-
----
-
-## 4. Spin Flow
-
-- [ ] spin button works when player can afford spin
-- [ ] spin button is blocked while already spinning
-- [ ] spin button is blocked during refill countdown
-- [ ] spin button is blocked when credits are insufficient
-- [ ] banner changes to “Spinning…” during spin
-- [ ] reels stop correctly and result is shown
-- [ ] payline highlight appears on winning result
-- [ ] banner updates correctly for win
-- [ ] banner updates correctly for loss
-- [ ] jackpot banner styling appears for jackpot
+- [X] spin button works when player can afford spin
+- [X] spin button is blocked while already spinning
+- [X] spin button is blocked during refill countdown
+- [X] spin button is blocked when credits are insufficient
+- [X] banner changes to “Spinning…” during spin
+- [X] reels stop correctly and result is shown
+- [X] payline highlight appears on winning result
+- [X] banner updates correctly for win
+- [X] banner updates correctly for loss
+- [X] jackpot banner styling appears for jackpot
 
 ---
 
-## 5. Forced Test Outcomes
+## 3. Forced Test Outcomes
 
-- [ ] forced Loss works
-- [ ] forced Small Win works
-- [ ] forced Medium Win works
-- [ ] forced Big Win works
-- [ ] forced 5 BARs works
-- [ ] forced Star Bonus works
-- [ ] forced Free Spins (3) works
-- [ ] forced Free Spins (5) works
-- [ ] forced JACKPOT works
-- [ ] forced Multiplier Spin works
-- [ ] each forced outcome affects only the next spin
-
----
-
-## 6. Free Spins / Multipliers
-
-- [ ] free spins increment correctly when awarded
-- [ ] free spins decrement correctly when used
-- [ ] free spin display updates correctly
-- [ ] every 10th spin triggers multiplier cycle correctly
-- [ ] multiplier banner appears before multiplier spin
-- [ ] multiplier badge appears during multiplier spin
-- [ ] multiplied payout is correct
-- [ ] multiplier does not incorrectly affect losing results
+- [X] forced Loss works
+- [X] forced Small Win works
+- [X] forced Medium Win works
+- [X] forced Big Win works
+- [X] forced 5 BARs works
+- [X] forced Star Bonus works
+- [X] forced Free Spins (3) works
+- [X] forced Free Spins (5) works
+- [X] forced JACKPOT works
+- [X] forced Multiplier Spin works
+- [X] each forced outcome affects only the next spin
 
 ---
 
-## 7. Auto-Spin
+## 4. Free Spins / Multipliers
 
-- [ ] auto-spin toggles on
-- [ ] auto-spin toggles off
-- [ ] auto-spin continues to next spin automatically
-- [ ] auto-spin stops when disabled
-- [ ] three consecutive auto-spin losses trigger soft overlay
-- [ ] five consecutive losses trigger dimming / attention effect
-- [ ] next win clears auto-loss softening state
-
----
-
-## 8. Refill / No-Credit Flow
-
-- [ ] no-credit state is detected correctly
-- [ ] refill countdown starts correctly
-- [ ] banner shows refill countdown
-- [ ] spin is disabled during refill
-- [ ] credits restore correctly after refill
-- [ ] UI returns to playable state after refill
+- [X] free spins increment correctly when awarded
+- [X] free spins decrement correctly when used
+- [X] free spin display updates correctly
+- [X] every 10th spin triggers multiplier cycle correctly
+- [X] multiplier banner appears before multiplier spin
+- [X] multiplier badge appears during multiplier spin
+- [X] multiplied payout is correct
+- [X] multiplier does not incorrectly affect losing results
 
 ---
 
-## 9. Jackpot / Totals
+## 5. Auto-Spin
 
-- [ ] jackpot value displays correctly
-- [ ] jackpot value ticks upward correctly
-- [ ] jackpot payout is awarded correctly
-- [ ] total winnings display updates correctly after wins
-
----
-
-## 10. Theme / Persistence
-
-- [ ] default theme loads correctly
-- [ ] theme switch updates UI
-- [ ] selected theme persists after refresh
-- [ ] unlocked theme stays unlocked after refresh
-- [ ] balance persists after refresh if intended
-- [ ] free spins persist after refresh if intended
-- [ ] total winnings persist after refresh if intended
-- [ ] corrupted or missing localStorage does not crash app
+- [X] auto-spin toggles on
+- [X] auto-spin toggles off
+- [X] auto-spin continues to next spin automatically
+- [X] auto-spin stops when disabled
+- [X] three consecutive auto-spin losses trigger soft overlay
+- [X] five consecutive losses trigger dimming / attention effect
+- [X] next win clears auto-loss softening state
 
 ---
 
-## 11. Responsive / Manual Visual Checks
+## 6. Refill / No-Credit Flow
 
-- [ ] reel area still shows 3 visible rows after resize
-- [ ] symbols do not shift incorrectly after resize
-- [ ] layout works on desktop
-- [ ] layout works on tablet
-- [ ] layout works on mobile
-- [ ] no horizontal scroll appears
-- [ ] win banner remains readable
-- [ ] jackpot bar remains readable
-- [ ] controls do not overflow
-- [ ] celebration effects look correct
-- [ ] sound and music toggles behave correctly
+- [X] no-credit state is detected correctly
+- [X] refill countdown starts correctly
+- [X] banner shows refill countdown
+- [X] spin is disabled during refill
+- [X] credits restore correctly after refill
+- [X] UI returns to playable state after refill
 
 ---
 
-## 12. Accessibility / Basic Interaction
+## 7. Jackpot / Totals
 
-- [ ] keyboard can reach main controls
-- [ ] spacebar spin works as intended
-- [ ] disabled controls are not clickable
-- [ ] status text updates are visible and understandable
-- [ ] decorative content does not interfere with interaction
-
----
-
-## Test Evidence to Save in Repo
-
-- [ ] this checklist
-- [ ] unit test files
-- [ ] Playwright test files
-- [ ] screenshots or notes from manual testing
-- [ ] bug log / test notes in ai-use-log or testing notes
+- [X] jackpot value displays correctly
+- [X] jackpot value ticks upward correctly
+- [X] jackpot payout is awarded correctly
+- [X] total winnings display updates correctly after wins
 
 ---
 
-## Install & Run
+## 8. Theme / Persistence
 
-```bash
-npm install
-npx playwright install
-python3 -m http.server 5500
-npm run test:e2e
-```
+- [X] default theme loads correctly
+- [X] theme switch updates UI
+- [X] selected theme persists after refresh
+- [X] unlocked theme stays unlocked after refresh
+- [X] balance persists after refresh if intended
+- [X] free spins persist after refresh if intended
+- [X] total winnings persist after refresh if intended
+- [X] corrupted or missing localStorage does not crash app
+
+---
+
+## 9. Responsive / Manual Visual Checks
+
+- [X] reel area still shows 3 visible rows after resize
+- [X] symbols do not shift incorrectly after resize
+- [X] layout works on desktop
+- [X] layout works on tablet
+- [X] layout works on mobile
+- [X] no horizontal scroll appears
+- [X] win banner remains readable
+- [X] jackpot bar remains readable
+- [X] controls do not overflow
+- [X] celebration effects look correct
+- [X] sound and music toggles behave correctly
+
+---
+
+## 10. Accessibility / Basic Interaction
+
+- [X] keyboard can reach main controls
+- [X] spacebar spin works as intended
+- [X] disabled controls are not clickable
+- [X] status text updates are visible and understandable
+- [X] decorative content does not interfere with interaction
+
+---
