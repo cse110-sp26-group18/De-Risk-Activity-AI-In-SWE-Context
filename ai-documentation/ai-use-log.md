@@ -1595,3 +1595,70 @@ Remove the per-reel wait(160), the "Here it comes..." banner text, and the suspe
 - No new DOM ids. No CSS variable changes.
 
 Return a 3-bullet diff.
+
+## Prompt 21
+
+**Goal: fix the too-fast-feeling spin (constant-speed scroll + staggered decel), scale the cabinet to own ~2/3 of the viewport, and fill the bottom dead space**
+- Diagnosis: v20's spin uses v8's easing curve cubic-bezier(0.13, 0.85, 0.22, 1.0), which pushes 85% of motion into the first 22% of the duration. With a 1100-2200ms transition that's ~240-480ms of visible scroll followed by a long silent settle — the user reads the whole spin as ~0.3 seconds. No single cubic-bezier gives a "real slot" feel; you need two phases: linear constant-speed scroll, then a decel stop.
+- Layout: v20 cabinet sits at natural height with empty background below. Clamping --symbol-h off viewport height (SYM_H reads from this via getSymH) lets the reels grow into the space without touching JS math.
+
+Using slot-machine-v20.html as the base, create slot-machine-v21.html. Do not rewrite the file.
+
+=== 1. TWO-PHASE SPIN (HIGH PRIORITY — fixes "spin too fast") ===
+
+Current behavior: all 5 reels translate directly to landing positions with an easing curve that front-loads motion. Spin looks like a quick flash-swoosh.
+
+New behavior: linear scroll phase (all reels together), then staggered decelerating stop.
+
+Implementation inside spin(), replacing the current `await wait(150); const stopDurations = [...]; await Promise.all(...)` block:
+
+    // Phase 1: linear scroll — all reels at constant speed for 1200ms.
+    // Covers 10 cell heights so the motion is clearly visible before stops begin.
+    const PHASE1_MS = 1200;
+    const PHASE1_CELLS = 10;
+    UI.strips.forEach(strip => {
+      strip.style.transition = `transform ${PHASE1_MS}ms linear`;
+      strip.style.transform = `translateY(${-(1 + PHASE1_CELLS) * SYM_H}px)`;
+    });
+    await wait(PHASE1_MS);
+
+    // Phase 2: stagger-stop. Each reel decelerates from its current position
+    // (cell 11) to its landing (cell 20-44 from placeOnStrip) over its own
+    // duration, giving a left-to-right stop.
+    const stopDurations = [800, 1000, 1200, 1400, 1900];
+    await Promise.all(UI.strips.map((strip, ri) =>
+      stopReel(ri, landings[ri], stopDurations[ri])));
+
+Total spin: 1200 + 1900 = 3100ms (last reel). First reel stops at 2000ms.
+
+Keep the existing tickIv interval sound (90ms from v20). No changes to stopReel() itself — its easing curve already provides the decel at the end.
+
+=== 2. CABINET FILLS VERTICAL SPACE (~2/3 of viewport) ===
+
+- .app vertical flex: header auto, .main-row flex:1, footer-note/settings-row auto. Already mostly true; verify and add `flex:1` to .main-row.
+- .cabinet: display:flex; flex-direction:column.
+- .reels-wrap gets flex:1 so the reels grow with the cabinet.
+- Drive reel height off viewport with a clamp on --symbol-h:
+    --symbol-h: clamp(88px, 12vh, 130px);
+  SYM_H reads from this var via getSymH() each spin — no JS change required.
+- .main-row .jackpot-bar { align-self: stretch; } so its 4 tiers distribute alongside the taller cabinet.
+
+=== 3. FILL BOTTOM DEAD SPACE ===
+
+- Spin button: 108px → 140px, glyph 56 → 72px.
+- .controls { align-items: stretch; } so bet panel and spin column match height.
+- .adj-btn: 36 → 42px. #betInput font 22 → 26px. quick-bets padding +15%.
+- Balance plaques +15% vertical padding.
+
+=== 4. OUTER FRAME TIGHTEN ===
+
+- .cabinet padding 12px 10px → 14px 12px.
+- Stronger outer shadow on cabinet for more separation from the background.
+
+=== CONSTRAINTS ===
+- No game logic changes. No DOM id renames.
+- Don't touch evaluate(), rollGrid, placeOnStrip, the multiplier logic, or auto-loss softening.
+- Stay non-scrollable (100vh + overflow hidden). If bigger reels overflow vertically, tighten the --symbol-h clamp or reduce cabinet padding rather than introduce scroll.
+- Mobile (<600px): the --symbol-h clamp's lower bound (88px) must hold.
+
+Return a 3-bullet diff: (a) how the two-phase spin is structured and the total duration, (b) how the cabinet fills vertical space, (c) what the controls row looks like at the new scale.
