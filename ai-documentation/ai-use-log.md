@@ -1393,3 +1393,61 @@ Ensure the page remains non-scrollable (100vh).
 
 Provide a 2-bullet diff: (a) How you have created the new themes, (b) How you have added new reel elements to make them more casino like (c) How you have added more comments and how the detail will be
 
+## Prompt 17
+**Using slot-machine-v16.html as the base, use the rest of this prompt as the refinement for it**
+
+Goal: Fix the remaining layout and responsiveness issues carried over from prior versions, stabilize reel symbol rendering, and implement two features from the original game design that have not yet been built: periodic spin multipliers and auto-spin loss softening.
+
+Diagnosis: Three bugs have survived multiple fix attempts. The .cabinet still overflows horizontally at full desktop width, likely because border-image outsets and box-shadow spreads are not included in the element's box model calculation. The .bet-panel and spin button continue to misbehave at phone widths despite corrections in v14 and v15 — the bet buttons push the panel wider than the .balance-bar and the spin button loses center alignment. Reel symbols still shift or disappear on viewport resize and occasionally revert to emoji fallbacks when switching themes. Additionally, two features from the original spec — periodic spin multipliers and auto-spin loss softening — have not been implemented in any version.
+
+Fix:
+Fix only the remaining slot-machine issues. Do not rewrite the app.
+
+Main problems:
+1. Cabinet/layout overflow:
+- .cabinet must never horizontally overflow at any viewport width.
+- Keep the same visual design, but account for padding, border-image outset, shadows, etc.
+- Use defensive sizing like box-sizing, max-width, overflow control.
+- .jackpot-bar tier cells must stay fixed width; long values should ellipsis, not expand the bar.
+- At <=480px, .bet-panel must match .balance-bar width exactly.
+- Bet buttons must shrink/wrap inside the panel.
+- Spin button must stay centered.
+- Page must remain full-screen/non-scrollable at 100vh, including 375px and 414px tall screens.
+
+1. Reel symbol stability:
+- On resize, reel symbols must remain exactly the final symbols from the last spin.
+- Store final reel state after each spin and reapply it on resize.
+- On theme switch, re-render symbols at correct size/alignment.
+- No emoji fallback, disappearing symbols, shifting, or bleeding outside cells.
+- Symbol cell height must follow --symbol-h across themes/viewports.
+
+1. Periodic spin multiplier:
+- Add S.spinCount.
+- Every 10th spin triggers a payout multiplier.
+- Cycle multipliers: spin 10 = 2x, spin 20 = 3x, spin 30 = 5x, spin 40 = 2x, etc.
+- Before a multiplier spin starts, briefly show an animated banner above reels like “2x MULTIPLIER SPIN!”
+- Apply multiplier after evaluate() returns. Do not modify evaluate().
+- Show active multiplier on spin button or small badge during that spin.
+
+1. Auto-spin loss softening:
+- Add S.autoLossStreak.
+- Only during auto-spin:
+  - After 3 consecutive losses, pause auto-spin for 1 spin delay and show small encouraging overlay like “Hang in there...”, then resume.
+  - After 5 consecutive losses, dim cabinet to 85% brightness and pulse the balance display.
+- Clear dim/pulse on next win.
+- Reset S.autoLossStreak to 0 on any win or when auto-spin turns off.
+
+Constraints:
+- Do NOT delete S.tokens.
+- Do NOT change scoring math or reel logic.
+- Do NOT change evaluate().
+- Do NOT change CSS variable/theme architecture.
+- Do NOT reorganize or rewrite the stylesheet.
+- Do NOT use external images.
+- Only add/override targeted CSS and JS.
+
+Return a 4-bullet diff:
+1. Desktop/mobile layout fixes
+2. Reel stability fixes
+3. Multiplier implementation
+4. Auto-spin loss softening implementation
