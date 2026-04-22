@@ -170,3 +170,14 @@
 - [ ] Playwright test files
 - [ ] screenshots or notes from manual testing
 - [ ] bug log / test notes in ai-use-log or testing notes
+
+---
+
+## Install & Run
+
+```bash
+npm install
+npx playwright install
+python3 -m http.server 5500
+npm run test:e2e
+```
