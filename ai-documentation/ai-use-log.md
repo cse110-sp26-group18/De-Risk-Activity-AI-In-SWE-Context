@@ -1550,3 +1550,48 @@ Keep v17's other behaviors intact: S.spinCount multiplier logic, S.autoLossStrea
 - Stay non-scrollable (100vh + overflow hidden).
 
 Return a 3-bullet diff: (a) exactly where in rollGrid you enforce per-column uniqueness and how tokens are handled, (b) which CSS blocks were deleted and which JS calls were removed, (c) any edge case awareness.
+
+## Prompt 20
+
+**Goal: three narrowly-scoped fixes from Slack feedback — spin-button rotation bug, jackpot label overflow, and all-reels-spin-simultaneously with left-to-right stop over ~2 seconds**
+- Batched these together because each is small and self-contained. Grouping reduces the ceremony of 3 separate AI passes.
+- Gave exact identifiers (class names, property values, duration arrays) so the AI can't hand-wave "faster spin" into something arbitrary.
+- Explicitly listed what stays (v17's multiplier + auto-loss softening branches) so the AI doesn't helpfully refactor them out.
+
+Using slot-machine-v19.html as the base, create slot-machine-v20.html with three focused fixes. Do not rewrite the file.
+
+=== 1. SPIN BUTTON SHOULD ONLY ROTATE DURING ACTUAL SPIN ===
+Bug: the spin button keeps rotating when disabled for any reason (refill countdown, insufficient balance). The CSS rule ".spin-btn:disabled { animation: spinPulse ... }" fires whenever the button is disabled, not just while spinning.
+
+Fix:
+- Remove the spinPulse animation from .spin-btn:disabled.
+- Add a new class .spin-btn.is-spinning that triggers spinPulse.
+- In render(): toggle is-spinning based on S.spinning, not disabled.
+- Keep disabled for click-blocking; add a dimmed/locked visual (opacity 0.55, cursor not-allowed, suppress the aura/breathe animations) so users see it's inactive without rotation.
+
+=== 2. JACKPOT TIERS: STACK LABEL ABOVE VALUE ===
+Bug: at wide viewports, GRAND / MAJOR values like "50,100" and "8,888" are truncated because the flex-direction:row layout gives them no horizontal room.
+
+Fix:
+- In the @media(min-width:1040px) override of .main-row .jp-tier, flex-direction: row → column, align-items: center.
+- Gap between label pill and value: 2–4px.
+- .main-row .jp-tier-val: drop text-align:right; font-size back up to clamp(14px, 2vw, 22px); white-space: nowrap kept.
+
+=== 3. FASTER, SIMULTANEOUS SPIN WITH LEFT-TO-RIGHT STOP ===
+The current spin stops each reel sequentially. Team wants all 5 reels visibly spinning simultaneously and stopping left-to-right over ~2 seconds.
+
+Fix inside spin() after landings are placed:
+
+Replace the phased await-stopReel chain with:
+    const stopDurations = [1100, 1300, 1500, 1700, 2200];
+    await Promise.all(UI.strips.map((strip, ri) =>
+      stopReel(ri, landings[ri], stopDurations[ri])));
+
+Remove the per-reel wait(160), the "Here it comes..." banner text, and the suspense boxShadow on reelEls[4] — the last reel's longer duration creates natural suspense. Lower initial pre-stop wait from 500 → 150ms. Tick interval 110 → 90ms.
+
+=== CONSTRAINTS ===
+- Don't touch evaluate(), rollGrid, placeOnStrip, or token logic.
+- Keep v17's multiplier + auto-loss softening (they run AFTER Promise.all).
+- No new DOM ids. No CSS variable changes.
+
+Return a 3-bullet diff.
