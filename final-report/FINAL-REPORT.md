@@ -33,6 +33,14 @@ With this type of research we were able to formulate the desgin of our app to ma
 Our prototype was used as away to help the team memembers who were running the different iterations to be able to get an idea of how we as collective wanted our app to be like. When planning and prototyping we first used opus claude as way to get the first iteration as detailed as possible with maximum thinking power. We then made the choice to use sonnent for the rest of executations to save on time and token usage. So for our memember who took on the iterations they had this prototype as a base as it included our ideas of color scheme based on our domain research the accessibility information based on our user based research and more features based on our different research. 
 
 ## Execution
+To be able to work on the execution in most time efficent manner and to free up reasources we split the work of the different iterations into different sets for memembers who owned claude. The set up was like this 
+- Daniel John 2-5 entries
+- Ajay Anubolu 6-9 entries
+- Howard Guan 10-13 entries
+- Aaron Delgado 14-16 entries
+- Anvay Patil 17-20 entries
+
+This allowed for us to conserve our token usage while also allowing for fresh eyes to be put to the creation of the app. Each memember had similar ways of handling the iterations and refinements. The memebers would set up goals that they had for the next iterations while also listing the fixes they want to make using their prompts and trying to get the AI to produce results. This allowed for the next person after them to be able to easily understand what the fixes were without having to read through every persons prompts. This was to allow for better time management so that we can make the iterations sooner than last warmup. After the first 5 one of memebers realized that the AI was keeping the same base case so they scraped it and remade it. After that most of the memembers were now trying to fix the UI's specific issues and the js specific issues and making improving the app little by little. Each person was using the miro to continue understanding the ideas we had as a group to keep the user viewpoint and the domain features we wanted to add. So for every prompt generations memembers were fixing issues that they saw on the previous verison while also seeing what could be added to include any features that we had come up in our planning stage. 
 
 ## Testing
 Our testing strategy followed a multi-layered, structured approach to ensure both technical reliability and a high-quality user experience. Rather than relying on trial-and-error, we established a master checklist that separated testing into three distinct categories: manual testing for visual behavior and user-facing flows, Playwright for repeatable browser interactions, and unit tests for isolated logic and state updates.
