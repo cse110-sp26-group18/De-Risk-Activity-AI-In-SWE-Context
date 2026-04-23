@@ -35,16 +35,19 @@ Our prototype was used as away to help the team memembers who were running the d
 ## Execution
 
 ## Testing
-Our testing strategy followed a multi-layered approach to ensure both technical reliability and a high-quality user experience. We utilized a combination of automated unit tests, end-to-end (E2E) UI tests, a rigorous manual testing checklist, and standard HTML validation.
+Our testing strategy followed a multi-layered, structured approach to ensure both technical reliability and a high-quality user experience. Rather than relying on trial-and-error, we established a master checklist that separated testing into three distinct categories: manual testing for visual behavior and user-facing flows, Playwright for repeatable browser interactions, and unit tests for isolated logic and state updates.
+
+### Visual & Behavioral Testing Strategy
+To maintain a software-engineering-focused workflow, we identified which repeatable actions should be automated—such as page load, spin interaction, and persistence after refresh—while reserving pure logic checks like payout, multiplier, and forced-grid behavior for our unit tests. 
+
+Manual testing was central to our visual validation, specifically focusing on balance and bet behavior, spin flow, forced outcomes, auto-spin, refill flow, persistence, responsiveness, and accessibility. This ensured that the "feel" of the casino experience remained consistent across different themes and screen sizes, capturing interactive nuances that automated tests might miss.
 
 ### Automated Testing
 We implemented two independent layers of automated tests to cover different aspects of the application:
-- **Unit Testing (Vitest):** We extracted core game logic into a standalone module (`gameLogic.js`) to perform pure logic verification. Our unit tests cover 7 critical scenarios, including payout multiplier calculations, balance and free spin management, and the handling of forced test outcomes. This ensures the underlying math and state transitions are robust across all game states.
-- **End-to-End Testing (Playwright):** To verify the user-facing interface, we implemented E2E tests for the final version of the slot machine (`slot-machine-v22.html`). These tests automate the browser to confirm that core UI elements—such as the spin button, bet input, balance display, and win banner—are correctly rendered and that the application remains stable and interactive after user input.
+- **Unit Testing (Vitest):** We extracted core game logic into a standalone module (`gameLogic.js`) to perform pure logic verification. Our unit tests cover 7 critical scenarios, including payout multiplier calculations, balance and free spin management, and the handling of forced test outcomes.
+- **End-to-End Testing (Playwright):** To verify the user-facing interface, we implemented E2E tests for the final version of the slot machine (`slot-machine-v22.html`). These tests automate the browser to confirm that core UI elements are correctly rendered and that the application remains stable after user interaction.
 
-### Manual Testing and Validation
-Beyond automated scripts, we conducted exhaustive manual validation to capture visual and interactive nuances that automated tests might miss:
-- **Comprehensive Checklist:** A 10-section manual testing checklist was used to verify everything from reel behavior and forced outcomes to theme persistence and accessibility. This included testing across different screen sizes (mobile, tablet, desktop) to ensure a fully responsive experience.
+### Standards and Compliance
 - **HTML Validation:** To ensure code quality and cross-browser compatibility, we validated our HTML against W3C standards. Our final version passed with no errors or warnings, confirming a clean and standards-compliant implementation.
 
 ![W3C Validation](w3-validated-html.png)
