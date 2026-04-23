@@ -36,3 +36,6 @@ Proposed the idea of including multipliers (maybe based on periodic intervals) t
 
 ### Daniel 
 Added research about how some slot machines add little wins to make you feel like you are winning when you are actually losing money. For example if you bet 1 dollar, but you only win back 30 seconds. Also added research how the sound effects and sounds play an important role in increasing heart rate during wins and affect how one views the slot machine. Finally proposed the idea to potentially have multiple bets going on at the same time.
+
+### Brendan
+Focused on Design and UI portion of research and mainly looked at Info Architecture/Usability. Researched online/virtual slot machines and referenced them in terms of the placement of components, variation in fonts, etc. For instance one of the main things he found was the visual focus of the rotation reels and how it takes of 2/3s of the screen. The placement of settings and balance/stake/win amounts and how they are the main components were big discoveries. On top of that, he added the reactive nature of various buttons and and interactive componenets. Lastly, he stressed the visual importance of curcial info such as grand prizes, win amounts, etc.
