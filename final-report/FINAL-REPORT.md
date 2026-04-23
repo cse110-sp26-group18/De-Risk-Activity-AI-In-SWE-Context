@@ -117,9 +117,8 @@ We implemented two independent layers of automated tests to cover different aspe
 *W3C Validation results for slot-machine-v22.html showing no errors or warnings.*
 
 ## Conclusion
-AI is capable of providing a basic prototype, however, it’s crucial that research is done prior to identify shortcomings and specify improvements
-Having a clear vision of what you want the AI to do is vital; AI can not do everything you ask it to do despite clear instructions so it’s still important to learn and be able to hand code desired features and / or designs
-Planning first allowed us to more easily identify what a good/bad slot machine looks like, so we were more qualified to judge the outcomes of each AI iteration. 
-Having outlines users for our app allowed us to reflect more from their perspective and not only look at the app from a dev POV, but also the actual user and their needs. 
-Collaborating and discussing as a team is required to create a good product as it allows for a variety of perspectives and accounts for nuances and details
-In our team, and for our future projects, we will be able to utilize AI for basic prototypes and initial iterations of a software, but at the end of the day, the quality relies on how much research we had done before hand, and how much we can personally implement the features and experience we hope to provide.
+Throughout this project, we found that while AI is capable of providing a **basic prototype**, the ultimate quality of software relies on foundational **prior research** to identify shortcomings and specify necessary improvements. Having a **clear vision** of the desired outcome is vital; however, AI cannot do it all—even with specific prompts and clear instructions. It remains essential for developers to learn and be able to **hand-code** desired features and designs to ensure technical integrity and fulfill specific project requirements.
+
+**Planning first** allowed us to more easily identify what a high-quality slot machine looks like, making us significantly more qualified to judge the outcomes of each AI iteration. By incorporating **user personas and stories (UCD)**, we were able to reflect on the application from the user's perspective rather than solely from a developer’s point of view. Furthermore, **discussing as a team on a regular basis** was essential to creating a superior product, as it provided a variety of perspectives and accounted for critical nuances and details that automated tools might overlook.
+
+In our future projects, we will continue to utilize **AI for basic prototypes and initial iterations**, but we recognize that the final quality of our work relies on our prior research, our collective vision, our connection with users, and our commitment to personally implementing the high-quality experience we hope to provide.
