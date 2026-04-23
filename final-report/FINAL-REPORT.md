@@ -44,18 +44,17 @@ Does Not want or Does Not need :
 - Games that differ too much from an actual casino game 
 
 5 user stories: 
-As a former gambler, 
-What’s important to me about this app is that it satisfied my gambling habits when I crave that dopamine rush. I want to feel like I’m truly at the casino. I want to be able to play more than just a couple of spins a day since that’s what I’ve noticed from other slot machine apps and websites. 
-As a rational person,
-I know I can’t win money from the game, but I will play for several rounds every day just for fun and to see my luck, sometimes to kill time.
-So I need tokens supplied every day, and the UI looks comfortable, rather than like the fancy ones in the casino.
-I often play after work as a way to have fun and have a good time, but constantly seeing the same UI gets boring. I want to be able to win new themes and new winnings to customize my experience to something I like. Also having the ability to spin the slot machine anywhere makes it easier for me after working with my hands a lot and gives similar vibes to casino play. 
-As a competitive player,
-I want a ranking system to be able to play against my friends so I can compare my performance. 
-I also want a starter package that I get for joining because of a friend's referral so I feel rewarded for joining the game. I want ways to collaborate with my friends, like rewards for sharing big wins with friends.
-As a bored student in a lecture, 
-I want a simple, fast, high-excitement game that I can conveniently pick up and play,
-So I can ease my boredom without having to commit to a long playthrough or face a learning curve
+1. As a former gambler, 
+    What’s important to me about this app is that it satisfied my gambling habits when I crave that dopamine rush. I want to feel like I’m truly at the casino. I want to be able to play more than just a couple of spins a day since that’s what I’ve noticed from other slot machine apps and websites. 
+2. As a rational person,
+    I know I can’t win money from the game, but I will play for several rounds every day just for fun and to see my luck, sometimes to kill time. So I need tokens supplied every day, and the UI looks comfortable, rather than like the fancy ones in the casino. 
+3. As a blue collar worker
+    I often play after work as a way to have fun and have a good time, but constantly seeing the same UI gets boring. I want to be able to win new themes and new winnings to customize my experience to something I like. Also having the ability to spin the slot machine anywhere makes it easier for me after working with my hands a lot and gives similar vibes to casino play. 
+4. As a competitive player,
+    I want a ranking system to be able to play against my friends so I can compare my performance. I also want a starter package that I get for joining because of a friend's referral so I feel rewarded for joining the game. I want ways to collaborate with my friends, like rewards for sharing big wins with friends.
+5. As a bored student in a lecture, 
+    I want a simple, fast, high-excitement game that I can conveniently pick up and play,
+    So I can ease my boredom without having to commit to a long playthrough or face a learning curve
 
 
 These kinds of user based research led us to be able to design our app with a more user focused idea going in. We created User personas to have an idea of what kind of person would be planning our game, their wants and needs and how can we facilate that in our app. We were also able to create different user stories that weren't as detailed as the persona but it gave us different secenrios of differet people playing our game such as causal playing college student who wants something fun, so we added different themes to make it more engagning. We realized as developers we needed to look at our app in a user viewpoint to really sell our app.
