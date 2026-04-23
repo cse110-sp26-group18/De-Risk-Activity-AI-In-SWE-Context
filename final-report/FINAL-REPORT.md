@@ -51,4 +51,9 @@ Beyond automated scripts, we conducted exhaustive manual validation to capture v
 *W3C Validation results for slot-machine-v22.html showing no errors or warnings.*
 
 ## Conclusion
-
+AI is capable of providing a basic prototype, however, it’s crucial that research is done prior to identify shortcomings and specify improvements
+Having a clear vision of what you want the AI to do is vital; AI can not do everything you ask it to do despite clear instructions so it’s still important to learn and be able to hand code desired features and / or designs
+Planning first allowed us to more easily identify what a good/bad slot machine looks like, so we were more qualified to judge the outcomes of each AI iteration. 
+Having outlines users for our app allowed us to reflect more from their perspective and not only look at the app from a dev POV, but also the actual user and their needs. 
+Collaborating and discussing as a team is required to create a good product as it allows for a variety of perspectives and accounts for nuances and details
+In our team, and for our future projects, we will be able to utilize AI for basic prototypes and initial iterations of a software, but at the end of the day, the quality relies on how much research we had done before hand, and how much we can personally implement the features and experience we hope to provide.
