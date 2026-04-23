@@ -9,7 +9,9 @@ Tech Warmup II: Generative AI as an Engineering Tool?
 
 - Find our testing methodology and results in /tests
 
-- Find our final report, findings, and conclusion on this experiment in /final-report 
+- Find our final report, findings, and conclusion on this experiment in /final-report
+
+  - Find our presentation video in De-Risk-Activity-AI-In-SWE-Context-Presentation.mp4
 
 
 
