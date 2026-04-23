@@ -31,6 +31,7 @@ With this type of research we were able to formulate the desgin of our app to ma
 
 <img width="1046" height="593" alt="CSE107" src="https://github.com/user-attachments/assets/0a8386a2-d4bf-44e4-8a39-b3ae5d7d9252" />
 Our prototype was used as away to help the team memembers who were running the different iterations to be able to get an idea of how we as collective wanted our app to be like. When planning and prototyping we first used opus claude as way to get the first iteration as detailed as possible with maximum thinking power. We then made the choice to use sonnent for the rest of executations to save on time and token usage. So for our memember who took on the iterations they had this prototype as a base as it included our ideas of color scheme based on our domain research the accessibility information based on our user based research and more features based on our different research. 
+
 ## Execution
 
 ## Testing
