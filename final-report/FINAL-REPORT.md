@@ -35,6 +35,20 @@ Our prototype was used as away to help the team memembers who were running the d
 ## Execution
 
 ## Testing
+Our testing strategy followed a multi-layered approach to ensure both technical reliability and a high-quality user experience. We utilized a combination of automated unit tests, end-to-end (E2E) UI tests, a rigorous manual testing checklist, and standard HTML validation.
+
+### Automated Testing
+We implemented two independent layers of automated tests to cover different aspects of the application:
+- **Unit Testing (Vitest):** We extracted core game logic into a standalone module (`gameLogic.js`) to perform pure logic verification. Our unit tests cover 7 critical scenarios, including payout multiplier calculations, balance and free spin management, and the handling of forced test outcomes. This ensures the underlying math and state transitions are robust across all game states.
+- **End-to-End Testing (Playwright):** To verify the user-facing interface, we implemented E2E tests for the final version of the slot machine (`slot-machine-v22.html`). These tests automate the browser to confirm that core UI elements—such as the spin button, bet input, balance display, and win banner—are correctly rendered and that the application remains stable and interactive after user input.
+
+### Manual Testing and Validation
+Beyond automated scripts, we conducted exhaustive manual validation to capture visual and interactive nuances that automated tests might miss:
+- **Comprehensive Checklist:** A 10-section manual testing checklist was used to verify everything from reel behavior and forced outcomes to theme persistence and accessibility. This included testing across different screen sizes (mobile, tablet, desktop) to ensure a fully responsive experience.
+- **HTML Validation:** To ensure code quality and cross-browser compatibility, we validated our HTML against W3C standards. Our final version passed with no errors or warnings, confirming a clean and standards-compliant implementation.
+
+![W3C Validation](w3-validated-html.png)
+*W3C Validation results for slot-machine-v22.html showing no errors or warnings.*
 
 ## Conclusion
 
