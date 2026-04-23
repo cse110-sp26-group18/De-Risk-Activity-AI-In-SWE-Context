@@ -90,6 +90,8 @@ This allowed for us to conserve our token usage while also allowing for fresh ey
 
 When talking about the refinement of each issues memembers try to first list all the fixes they needed some being a bit broad such as "While also creating the themes, create new element images for the reels so that they are more like the reference image with more gold and more like fancy looking elements instead of basic emojis." to very specific such as ![alt text](image.png). 
 
+These fixes were meant to catogries the type of fix we needed from the AI to make sure it was keeping on track for what we needed done. If it's set up as big blob the AI may not create what we wanted and also it allowed us as the devs to better formate what we needed the AI to change.
+
 With each one though we had to make sure the AI didn't stray or change parts of the project that we had already liked about the previous iterations. Due to the randomness of the AI this was needed and each memember listed it as time went on to keep the project as stable as possible. We also asked the AI to list the changes it made so that we were able to look at specific parts of the code instead of searching through the whole code base for the changes. This was meant to save time to be able to quickly see if something wasn't change correctly or there was a new issue
 ![alt text](image-1.png)
 
